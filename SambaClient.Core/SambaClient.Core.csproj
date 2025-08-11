@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\SambaClient.Infrastructure\SambaClient.Infrastructure.csproj" />
+      <ProjectReference Include="..\SambaClient.Shared\SambaClient.Shared.csproj" />
+    </ItemGroup>
+
+</Project>

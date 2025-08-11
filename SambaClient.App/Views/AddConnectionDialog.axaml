@@ -1,0 +1,112 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SambaClient.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="400"
+        x:Class="SambaClient.App.Views.AddConnectionDialog"
+        x:DataType="vm:AddConnectionViewModel"
+        Title="Add SMB Connection"
+        Width="450"
+        Height="400"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        ShowInTaskbar="False">
+
+    <Design.DataContext>
+        <vm:AddConnectionViewModel/>
+    </Design.DataContext>
+
+    <Border Padding="20">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Connection Form -->
+            <StackPanel Grid.Row="0" Spacing="15">
+                <TextBlock Text="Connection Details" 
+                           FontSize="18" 
+                           FontWeight="Bold" 
+                           Margin="0,0,0,10"/>
+
+                <!-- Connection Name -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Connection Name:"/>
+                    <TextBox Text="{Binding ConnectionName}" 
+                             Watermark="My Server Connection"/>
+                </StackPanel>
+
+                <!-- Host -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Host/IP Address:"/>
+                    <TextBox Text="{Binding ConnectionHost}" 
+                             Watermark="192.168.1.100 or server.domain.com"/>
+                </StackPanel>
+                
+                <!-- Username -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Username:"/>
+                    <TextBox Text="{Binding Username}" 
+                             Watermark="username"/>
+                </StackPanel>
+
+                <!-- Password -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Password:"/>
+                    <TextBox Text="{Binding Password}" 
+                             PasswordChar="*"
+                             RevealPassword="False"/>
+                </StackPanel>
+
+                <!-- Test Connection Result -->
+                <Border Background="LightGray" 
+                        Padding="10" 
+                        CornerRadius="5"
+                        IsVisible="{Binding ShowTestResult}">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="{Binding TestResultMessage}"
+                                   Foreground="{Binding TestResultColor}"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding TestConnectionTime, StringFormat='Connection time: {0}ms'}"
+                                   IsVisible="{Binding IsTestSuccess}"
+                                   FontSize="12"
+                                   Foreground="Gray"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Buttons -->
+            <Border Grid.Row="1" 
+                    BorderBrush="Gray" 
+                    BorderThickness="0,1,0,0" 
+                    Padding="0,15,0,0" 
+                    Margin="0,15,0,0">
+                <StackPanel Orientation="Horizontal" 
+                            HorizontalAlignment="Right" 
+                            Spacing="10">
+                    
+                    <Button Content="Test Connection" 
+                            Command="{Binding TestConnectionCommand}"
+                            IsEnabled="{Binding CanTestConnection}"
+                            Padding="10,5"
+                            Width="120"/>
+                    
+                    <Button Content="Save" 
+                            Command="{Binding SaveConnectionCommand}"
+                            IsEnabled="{Binding CanSave}"
+                            IsDefault="True"
+                            Padding="10,5"
+                            Width="80"/>
+                    
+                    <Button Content="Cancel" 
+                            Command="{Binding CancelCommand}"
+                            IsCancel="True"
+                            Padding="10,5"
+                            Width="80"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

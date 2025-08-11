@@ -1,0 +1,143 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SambaClient.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="SambaClient.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Samba File Manager">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /> <!-- Connection controls -->
+            <RowDefinition Height="*" />    <!-- File browser -->
+            <RowDefinition Height="Auto" /> <!-- Status bar -->
+        </Grid.RowDefinitions>
+
+        <!-- Connection Controls Panel -->
+        <Border Grid.Row="0" Background="LightGray" Padding="10">
+            <StackPanel Orientation="Vertical" Spacing="10">
+
+                <!-- Connection Selection Row -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Connection:" VerticalAlignment="Center" Width="80" />
+
+                    <ComboBox Name="ConnectionComboBox"
+                              ItemsSource="{Binding SmbServerConnections}"
+                              SelectedItem="{Binding CurrentSmbServerConnection}"
+                              DisplayMemberBinding="{Binding Name}"
+                              Width="200"
+                              PlaceholderText="Select connection..." />
+
+                    <Button Content="Add Connection"
+                            Command="{Binding ShowAddConnectionDialogCommand}"
+                            Padding="10,5" />
+
+                    <Button Content="Test Connection"
+                            Command="{Binding TestConnectionCommand}"
+                            IsEnabled="{Binding CurrentSmbServerConnection, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Padding="10,5" />
+
+                    <Button Content="Connect"
+                            Command="{Binding ConnectToServerCommand}"
+                            IsEnabled="{Binding CanConnect}"
+                            Padding="10,5" />
+
+                    <Button Content="Disconnect"
+                            Command="{Binding DisconnectFromServerAsyncCommand}"
+                            IsVisible="{Binding IsConnected}"
+                            Padding="10,5" />
+                </StackPanel>
+
+                <!-- Connection Status -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Status:" VerticalAlignment="Center" Width="80" />
+                    <TextBlock Text="{Binding ConnectionStatus}"
+                               Foreground="{Binding ConnectionStatusColor}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding StatusMessage}"
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- File Browser Area -->
+        <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Margin="10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" /> <!-- Path bar -->
+                    <RowDefinition Height="*" />    <!-- File list -->
+                </Grid.RowDefinitions>
+
+                <!-- Current Path -->
+                <Border Grid.Row="0" Background="WhiteSmoke" Padding="5" BorderBrush="Gray" BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="Path:" VerticalAlignment="Center" />
+                        <TextBox Text="{Binding CurrentPath}"
+                                 IsReadOnly="True"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 VerticalAlignment="Center"
+                                 Width="300" />
+                        <Button Content="Refresh"
+                                Command="{Binding RefreshFilesCommand}"
+                                IsEnabled="{Binding IsConnected}"
+                                Padding="8,4" />
+                    </StackPanel>
+                </Border>
+
+                <!-- File List -->
+                <!-- <DataGrid Grid.Row="1" -->
+                <!--           ItemsSource="{Binding Files}" -->
+                <!--           SelectedItem="{Binding SelectedFile}" -->
+                <!--           IsReadOnly="True" -->
+                <!--           GridLinesVisibility="Horizontal" -->
+                <!--           HeadersVisibility="Column" -->
+                <!--           Margin="5"> -->
+                <!--     <DataGrid.Columns> -->
+                <!--         <DataGridTextColumn Header="Name" -->
+                <!--                             Binding="{Binding FileName}" -->
+                <!--                             Width="*" /> -->
+                <!--         <DataGridTextColumn Header="Type" -->
+                <!--                             Binding="{Binding IsDirectory, Converter={x:Static vm:MainWindowViewModel.FileTypeConverter}}" -->
+                <!--                             Width="Auto" /> -->
+                <!--         <DataGridTextColumn Header="Size" -->
+                <!--                             Binding="{Binding Size}" -->
+                <!--                             Width="Auto" /> -->
+                <!--         <DataGridTextColumn Header="ModifiedDate" -->
+                <!--                             Binding="{Binding ModifiedDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" -->
+                <!--                             Width="Auto" /> -->
+                <!--     </DataGrid.Columns> -->
+                <!-- </DataGrid> -->
+
+                <!-- Empty state -->
+                <TextBlock Grid.Row="1"
+                           Text="Connect to a server to browse files"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontSize="16"
+                           Foreground="Gray"
+                           IsVisible="{Binding !IsConnected}" />
+            </Grid>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="LightGray" Padding="10,5" BorderBrush="Gray" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="20">
+                <TextBlock Text="{Binding Files.Count, StringFormat='Items: {0}'}"
+                           IsVisible="{Binding IsConnected}" />
+                <TextBlock Text="{Binding CurrentSmbServerConnection.Host, StringFormat='Host: {0}'}"
+                           IsVisible="{Binding IsConnected}" />
+                <TextBlock Text="{Binding CurrentSmbServerConnection.Username, StringFormat='User: {0}'}"
+                           IsVisible="{Binding IsConnected}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
