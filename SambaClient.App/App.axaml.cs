@@ -8,8 +8,6 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using SambaClient.App.ViewModels;
 using SambaClient.App.Views;
-using SambaClient.Core.Services;
-using SambaClient.Core.Services.Interfaces;
 using SambaClient.Infrastructure.Services;
 using SambaClient.Infrastructure.Services.Interfaces;
 
@@ -59,7 +57,7 @@ public partial class App : Application
     private static void ConfigureServices(IServiceCollection services, Window mainWindow)
     {
         // Core services
-        services.AddSingleton<IConnectionManager, ConnectionManager>();
+        services.AddSingleton<ISmbConnectionManager, ConnectionManager>();
         // services.AddSingleton<ISmbService, SmbService>();
         
         // Infrastructure services
@@ -68,14 +66,14 @@ public partial class App : Application
         // ViewModels
         services.AddTransient<MainWindowViewModel>(provider =>
         {
-            var connectionManager = provider.GetRequiredService<IConnectionManager>();
+            var connectionManager = provider.GetRequiredService<ISmbConnectionManager>();
             // var smbService = provider.GetRequiredService<ISmbService>();
             return new MainWindowViewModel(connectionManager, mainWindow);
         });
         
         services.AddTransient<AddConnectionViewModel>(provider =>
         {
-            var connectionManager = provider.GetRequiredService<IConnectionManager>();
+            var connectionManager = provider.GetRequiredService<ISmbConnectionManager>();
             return new AddConnectionViewModel(connectionManager);
         });
 

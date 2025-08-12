@@ -11,13 +11,13 @@ using CommunityToolkit.Mvvm.Messaging;
 using SambaClient.App.Messages;
 using SambaClient.Core.DTOs;
 using SambaClient.Core.Entities;
-using SambaClient.Core.Services.Interfaces;
+using SambaClient.Infrastructure.Services.Interfaces;
 
 namespace SambaClient.App.ViewModels;
 
 public partial class AddConnectionViewModel : ViewModelBase
 {
-    private readonly IConnectionManager _connectionManager;
+    private readonly ISmbConnectionManager _connectionManager;
 
     [ObservableProperty]
     private string connectionName = string.Empty;
@@ -59,7 +59,7 @@ public partial class AddConnectionViewModel : ViewModelBase
 
     public AddConnectionViewModel() : this(null!) { }
 
-    public AddConnectionViewModel(IConnectionManager connectionManager)
+    public AddConnectionViewModel(ISmbConnectionManager connectionManager)
     {
         _connectionManager = connectionManager;
 

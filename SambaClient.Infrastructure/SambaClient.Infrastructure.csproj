@@ -10,4 +10,8 @@
       <PackageReference Include="SMBLibrary" Version="1.5.4.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\SambaClient.Core\SambaClient.Core.csproj" />
+    </ItemGroup>
+
 </Project>

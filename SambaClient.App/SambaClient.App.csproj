@@ -28,5 +28,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\SambaClient.Core\SambaClient.Core.csproj" />
+      <ProjectReference Include="..\SambaClient.Infrastructure\SambaClient.Infrastructure.csproj" />
     </ItemGroup>
 </Project>

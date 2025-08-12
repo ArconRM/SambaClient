@@ -1,6 +1,6 @@
 namespace SambaClient.Core.Entities;
 
-public class SmbServerConnection
+public class SmbServerConnection: ServerConnection
 {
     public Guid Uuid { get; set; }
     

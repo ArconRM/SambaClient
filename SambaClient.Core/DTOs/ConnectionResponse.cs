@@ -2,7 +2,7 @@ using SambaClient.Core.Entities;
 
 namespace SambaClient.Core.DTOs;
 
-public class SmbConnectionResponse
+public class ConnectionResponse
 {
     public bool IsSuccess { get; set; }
 

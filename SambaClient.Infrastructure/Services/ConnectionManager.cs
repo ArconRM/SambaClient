@@ -1,18 +1,15 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 using SambaClient.Core.DTOs;
 using SambaClient.Core.Entities;
-using SambaClient.Core.Services.Interfaces;
 using SambaClient.Infrastructure.Services.Interfaces;
 using SambaClient.Shared.Exceptions;
 using SMBLibrary;
 
-namespace SambaClient.Core.Services;
+namespace SambaClient.Infrastructure.Services;
 
-public class ConnectionManager : IConnectionManager
+public class ConnectionManager : ISmbConnectionManager
 {
     private static readonly string _connectionsFilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -134,7 +131,7 @@ public class ConnectionManager : IConnectionManager
         await SaveConnectionsAsync(connections, token);
     }
 
-    public async Task<SmbConnectionResponse> TestConnectionAsync(TestConnectionRequest request, CancellationToken token)
+    public async Task<ConnectionResponse> TestConnectionAsync(TestConnectionRequest request, CancellationToken token)
     {
         var client = _smbClientProvider.GetSambaClient();
 
@@ -146,7 +143,7 @@ public class ConnectionManager : IConnectionManager
                 ipAddress = hostEntry.AddressList.FirstOrDefault();
                 if (ipAddress == null)
                 {
-                    return new SmbConnectionResponse
+                    return new ConnectionResponse
                     {
                         IsSuccess = false,
                         ErrorMessage = "Could not resolve hostname"
@@ -157,7 +154,7 @@ public class ConnectionManager : IConnectionManager
             bool connected = client.Connect(ipAddress, SMBTransportType.DirectTCPTransport);
             if (!connected)
             {
-                return new SmbConnectionResponse
+                return new ConnectionResponse
                 {
                     IsSuccess = false,
                     ErrorMessage = "Failed to connect to SMB server"
@@ -167,7 +164,7 @@ public class ConnectionManager : IConnectionManager
             NTStatus loginStatus = client.Login(string.Empty, request.Username, request.Password);
             if (loginStatus != NTStatus.STATUS_SUCCESS)
             {
-                return new SmbConnectionResponse
+                return new ConnectionResponse
                 {
                     IsSuccess = false,
                     ErrorMessage = $"Authentication failed: {loginStatus}"
@@ -176,7 +173,7 @@ public class ConnectionManager : IConnectionManager
 
             List<string> shareNames = client.ListShares(out NTStatus shareStatus);
 
-            return new SmbConnectionResponse
+            return new ConnectionResponse
             {
                 IsSuccess = true,
                 Shares = shareNames,
@@ -184,7 +181,7 @@ public class ConnectionManager : IConnectionManager
         }
         catch (SocketException ex)
         {
-            return new SmbConnectionResponse
+            return new ConnectionResponse
             {
                 IsSuccess = false,
                 ErrorMessage = $"Network error: {ex.Message}"
@@ -192,7 +189,7 @@ public class ConnectionManager : IConnectionManager
         }
         catch (Exception ex)
         {
-            return new SmbConnectionResponse
+            return new ConnectionResponse
             {
                 IsSuccess = false,
                 ErrorMessage = $"Unexpected error: {ex.Message}"
@@ -200,7 +197,7 @@ public class ConnectionManager : IConnectionManager
         }
     }
 
-    public Task<SmbConnectionResponse> ConnectAsync(Guid connectionUuid, CancellationToken token)
+    public Task<ConnectionResponse> ConnectAsync(Guid connectionUuid, CancellationToken token)
     {
         throw new NotImplementedException();
     }

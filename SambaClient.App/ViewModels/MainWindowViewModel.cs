@@ -14,13 +14,13 @@ using SambaClient.App.Messages;
 using SambaClient.App.Views;
 using SambaClient.Core.DTOs;
 using SambaClient.Core.Entities;
-using SambaClient.Core.Services.Interfaces;
+using SambaClient.Infrastructure.Services.Interfaces;
 
 namespace SambaClient.App.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    private readonly IConnectionManager _connectionManager;
+    private readonly ISmbConnectionManager _connectionManager;
     // private readonly ISmbService _smbService;
     
     private readonly Window _parentWindow;
@@ -60,7 +60,7 @@ public partial class MainWindowViewModel : ViewModelBase
         null!) { }
 
     public MainWindowViewModel(
-        IConnectionManager connectionManager,
+        ISmbConnectionManager connectionManager,
         // ISmbService smbService,
         Window parentWindow)
     {

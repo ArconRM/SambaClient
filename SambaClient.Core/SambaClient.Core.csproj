@@ -7,7 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\SambaClient.Infrastructure\SambaClient.Infrastructure.csproj" />
       <ProjectReference Include="..\SambaClient.Shared\SambaClient.Shared.csproj" />
     </ItemGroup>
 
