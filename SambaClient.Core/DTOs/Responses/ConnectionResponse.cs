@@ -1,6 +1,4 @@
-using SambaClient.Core.Entities;
-
-namespace SambaClient.Core.DTOs;
+namespace SambaClient.Core.DTOs.Responses;
 
 public class ConnectionResponse
 {

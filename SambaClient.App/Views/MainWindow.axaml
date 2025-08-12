@@ -50,8 +50,12 @@
                             Padding="10,5" />
 
                     <Button Content="Disconnect"
-                            Command="{Binding DisconnectFromServerAsyncCommand}"
+                            Command="{Binding DisconnectFromServerCommand}"
                             IsVisible="{Binding IsConnected}"
+                            Padding="10,5" />
+                    
+                    <Button Content="Delete"
+                            Command="{Binding DeleteConnectionCommand}"
                             Padding="10,5" />
                 </StackPanel>
 
@@ -93,29 +97,30 @@
                     </StackPanel>
                 </Border>
 
+
                 <!-- File List -->
-                <!-- <DataGrid Grid.Row="1" -->
-                <!--           ItemsSource="{Binding Files}" -->
-                <!--           SelectedItem="{Binding SelectedFile}" -->
-                <!--           IsReadOnly="True" -->
-                <!--           GridLinesVisibility="Horizontal" -->
-                <!--           HeadersVisibility="Column" -->
-                <!--           Margin="5"> -->
-                <!--     <DataGrid.Columns> -->
-                <!--         <DataGridTextColumn Header="Name" -->
-                <!--                             Binding="{Binding FileName}" -->
-                <!--                             Width="*" /> -->
-                <!--         <DataGridTextColumn Header="Type" -->
-                <!--                             Binding="{Binding IsDirectory, Converter={x:Static vm:MainWindowViewModel.FileTypeConverter}}" -->
-                <!--                             Width="Auto" /> -->
-                <!--         <DataGridTextColumn Header="Size" -->
-                <!--                             Binding="{Binding Size}" -->
-                <!--                             Width="Auto" /> -->
-                <!--         <DataGridTextColumn Header="ModifiedDate" -->
-                <!--                             Binding="{Binding ModifiedDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" -->
-                <!--                             Width="Auto" /> -->
-                <!--     </DataGrid.Columns> -->
-                <!-- </DataGrid> -->
+                <DataGrid Grid.Row="1"
+                          ItemsSource="{Binding Files}"
+                          SelectedItem="{Binding SelectedFile}"
+                          IsReadOnly="True"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          Margin="5">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Name"
+                                            Binding="{Binding FileName}"
+                                            Width="*" />
+                        <DataGridTextColumn Header="Type"
+                                            Binding="{Binding IsDirectory, Converter={x:Static vm:MainWindowViewModel.FileTypeConverter}}"
+                                            Width="Auto" />
+                        <DataGridTextColumn Header="Size"
+                                            Binding="{Binding Size}"
+                                            Width="Auto" />
+                        <DataGridTextColumn Header="ModifiedDate"
+                                            Binding="{Binding ModifiedDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
+                                            Width="Auto" />
+                    </DataGrid.Columns>
+                </DataGrid>
 
                 <!-- Empty state -->
                 <TextBlock Grid.Row="1"

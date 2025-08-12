@@ -1,4 +1,4 @@
-namespace SambaClient.Core.DTOs;
+namespace SambaClient.Core.DTOs.Requests;
 
 public class TestConnectionRequest
 {

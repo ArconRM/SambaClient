@@ -1,0 +1,17 @@
+using SambaClient.Core.DTOs;
+using SambaClient.Core.DTOs.Requests;
+using SambaClient.Core.DTOs.Responses;
+using SambaClient.Core.Entities;
+
+namespace SambaClient.Infrastructure.Services.Interfaces;
+
+public interface ISmbService
+{
+    Task<GetFilesResponse> GetAllFilesAsync(Guid connectionUuid, CancellationToken token);
+    
+    Task<Stream> DownloadFileAsync(FileRequest request, CancellationToken token);
+    
+    Task<BaseResponse> UploadFileAsync(UploadFileRequest request, CancellationToken token);
+    
+    Task<BaseResponse> DeleteFileAsync(FileRequest request, CancellationToken token);
+}

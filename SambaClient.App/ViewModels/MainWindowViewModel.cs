@@ -3,7 +3,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
@@ -11,8 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using SambaClient.App.Messages;
-using SambaClient.App.Views;
-using SambaClient.Core.DTOs;
+using SambaClient.Core.DTOs.Requests;
 using SambaClient.Core.Entities;
 using SambaClient.Infrastructure.Services.Interfaces;
 
@@ -21,9 +19,7 @@ namespace SambaClient.App.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly ISmbConnectionManager _connectionManager;
-    // private readonly ISmbService _smbService;
-    
-    private readonly Window _parentWindow;
+    private readonly ISmbService _smbService;
 
     public ObservableCollection<SmbServerConnection> SmbServerConnections { get; } = new();
     public ObservableCollection<FileEntity> Files { get; } = new();
@@ -56,22 +52,17 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool isLoading;
 
     public MainWindowViewModel() : this(null!,
-        // null!,
         null!) { }
 
     public MainWindowViewModel(
         ISmbConnectionManager connectionManager,
-        // ISmbService smbService,
-        Window parentWindow)
+        ISmbService smbService)
     {
         _connectionManager = connectionManager;
-        // _smbService = smbService;
-        _parentWindow = parentWindow;
+        _smbService = smbService;
 
-        // Property change handlers
         PropertyChanged += OnPropertyChanged;
 
-        // Load saved connections
         _ = LoadConnections();
     }
 
@@ -140,31 +131,43 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task DeleteConnectionAsync()
+    {
+        if (CurrentSmbServerConnection is null) return;
+
+        try
+        {
+            await _connectionManager.RemoveConnectionAsync(CurrentSmbServerConnection.Uuid, CancellationToken.None);
+
+            SmbServerConnections.Remove(CurrentSmbServerConnection);
+            CurrentSmbServerConnection = null;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Deletion failed: {ex.Message}";
+            IsConnected = false;
+        }
+    }
+
+    [RelayCommand]
     private async Task ConnectToServerAsync()
     {
-        if (CurrentSmbServerConnection == null) return;
+        if (CurrentSmbServerConnection is null) return;
 
         IsLoading = true;
         StatusMessage = "Connecting...";
 
         try
         {
-            var testRequest = new TestConnectionRequest
-            {
-                Host = CurrentSmbServerConnection.Host,
-                Username = CurrentSmbServerConnection.Username,
-                Password = CurrentSmbServerConnection.Password
-            };
-
-            var testResponse = await _connectionManager.TestConnectionAsync(testRequest, CancellationToken.None);
+            var testResponse =
+                await _connectionManager.ConnectAsync(CurrentSmbServerConnection.Uuid, CancellationToken.None);
 
             if (testResponse.IsSuccess)
             {
-                CurrentSmbServerConnection.IsConnected = true;
                 IsConnected = true;
                 StatusMessage = "Connected successfully";
 
-                // await RefreshFiles();
+                await RefreshFilesAsync();
             }
             else
             {
@@ -185,23 +188,19 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void DisconnectFromServerAsync()
+    private void DisconnectFromServer()
     {
-        if (CurrentSmbServerConnection != null)
-        {
-            CurrentSmbServerConnection.IsConnected = false;
-        }
-
         IsConnected = false;
         Files.Clear();
         StatusMessage = "Disconnected";
+
         UpdateCanConnect();
     }
 
     [RelayCommand]
     private async Task TestConnectionAsync()
     {
-        if (CurrentSmbServerConnection == null) return;
+        if (CurrentSmbServerConnection is null) return;
 
         StatusMessage = "Testing connection...";
         IsLoading = true;
@@ -239,44 +238,41 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task RefreshFilesAsync()
     {
-        // if (!IsConnected || CurrentSmbServerConnection == null) return;
-        //
-        // IsLoading = true;
-        // StatusMessage = "Loading files...";
-        //
-        // try
-        // {
-        //     var request = new ListFilesRequest
-        //     {
-        //         ConnectionId = CurrentSmbServerConnection.Id,
-        //         Path = CurrentPath
-        //     };
-        //
-        //     var response = await _smbService.ListFilesAsync(request);
-        //
-        //     if (response.IsSuccess)
-        //     {
-        //         Files.Clear();
-        //         foreach (var file in response.Files)
-        //         {
-        //             Files.Add(file);
-        //         }
-        //
-        //         StatusMessage = $"Loaded {Files.Count} items";
-        //     }
-        //     else
-        //     {
-        //         StatusMessage = $"Failed to load files: {response.ErrorMessage}";
-        //     }
-        // }
-        // catch (Exception ex)
-        // {
-        //     StatusMessage = $"Error loading files: {ex.Message}";
-        // }
-        // finally
-        // {
-        //     IsLoading = false;
-        // }
+        if (!IsConnected || CurrentSmbServerConnection is null) return;
+
+        IsLoading = true;
+        StatusMessage = "Loading files...";
+
+        try
+        {
+            var response = await _smbService.GetAllFilesAsync(CurrentSmbServerConnection.Uuid, CancellationToken.None);
+
+            if (response.IsSuccess)
+            {
+                Files.Clear();
+                foreach (var file in response.Files)
+                {
+                    if (file.FileName.StartsWith("."))
+                        continue;
+                    
+                    Files.Add(file);
+                }
+
+                StatusMessage = $"Loaded {Files.Count} items";
+            }
+            else
+            {
+                StatusMessage = $"Failed to load files: {response.ErrorMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading files: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     // Converter for file type display

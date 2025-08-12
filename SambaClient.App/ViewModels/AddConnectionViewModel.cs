@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using SambaClient.App.Messages;
 using SambaClient.Core.DTOs;
+using SambaClient.Core.DTOs.Requests;
 using SambaClient.Core.Entities;
 using SambaClient.Infrastructure.Services.Interfaces;
 
@@ -24,6 +25,9 @@ public partial class AddConnectionViewModel : ViewModelBase
 
     [ObservableProperty]
     private string connectionHost = string.Empty;
+    
+    [ObservableProperty]
+    private string shareName = string.Empty;
 
     [ObservableProperty]
     private string username = string.Empty;
@@ -75,10 +79,12 @@ public partial class AddConnectionViewModel : ViewModelBase
     {
         CanTestConnection = !string.IsNullOrWhiteSpace(ConnectionHost) &&
                             !string.IsNullOrWhiteSpace(Username) &&
+                            !string.IsNullOrWhiteSpace(ShareName) &&
                             !IsTestInProgress;
 
         CanSave = !string.IsNullOrWhiteSpace(ConnectionName) &&
                   !string.IsNullOrWhiteSpace(ConnectionHost) &&
+                  !string.IsNullOrWhiteSpace(ShareName) &&
                   !string.IsNullOrWhiteSpace(Username) &&
                   !string.IsNullOrWhiteSpace(Password);
 
@@ -148,6 +154,7 @@ public partial class AddConnectionViewModel : ViewModelBase
             {
                 Name = ConnectionName.Trim(),
                 Host = ConnectionHost.Trim(),
+                ShareName = ShareName.Trim(),
                 Username = Username.Trim(),
                 Password = Password
             };

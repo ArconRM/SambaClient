@@ -8,9 +8,9 @@
         x:DataType="vm:AddConnectionViewModel"
         Title="Add SMB Connection"
         Width="450"
-        Height="400"
-        WindowStartupLocation="CenterOwner"
+        SizeToContent="Height"
         CanResize="False"
+        WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False">
 
     <Design.DataContext>
@@ -43,6 +43,13 @@
                     <TextBlock Text="Host/IP Address:"/>
                     <TextBox Text="{Binding ConnectionHost}" 
                              Watermark="192.168.1.100 or server.domain.com"/>
+                </StackPanel>
+                
+                <!-- Share Name -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Share name:"/>
+                    <TextBox Text="{Binding ShareName}" 
+                             Watermark="f.e. public or shared"/>
                 </StackPanel>
                 
                 <!-- Username -->

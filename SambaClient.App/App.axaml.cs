@@ -28,7 +28,7 @@ public partial class App : Application
         
         var services = new ServiceCollection();
         var mainWindow = new MainWindow();
-        ConfigureServices(services, mainWindow);
+        ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -54,21 +54,17 @@ public partial class App : Application
         }
     }
     
-    private static void ConfigureServices(IServiceCollection services, Window mainWindow)
+    private static void ConfigureServices(IServiceCollection services)
     {
-        // Core services
-        services.AddSingleton<ISmbConnectionManager, ConnectionManager>();
-        // services.AddSingleton<ISmbService, SmbService>();
-        
-        // Infrastructure services
         services.AddSingleton<ISmbClientProvider, SmbClientProvider>();
+        services.AddSingleton<ISmbConnectionManager, ConnectionManager>();
+        services.AddSingleton<ISmbService, SmbService>();
         
-        // ViewModels
         services.AddTransient<MainWindowViewModel>(provider =>
         {
             var connectionManager = provider.GetRequiredService<ISmbConnectionManager>();
-            // var smbService = provider.GetRequiredService<ISmbService>();
-            return new MainWindowViewModel(connectionManager, mainWindow);
+            var smbService = provider.GetRequiredService<ISmbService>();
+            return new MainWindowViewModel(connectionManager, smbService);
         });
         
         services.AddTransient<AddConnectionViewModel>(provider =>

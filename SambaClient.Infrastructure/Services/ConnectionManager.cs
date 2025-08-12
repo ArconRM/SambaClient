@@ -2,16 +2,19 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 using SambaClient.Core.DTOs;
+using SambaClient.Core.DTOs.Requests;
+using SambaClient.Core.DTOs.Responses;
 using SambaClient.Core.Entities;
 using SambaClient.Infrastructure.Services.Interfaces;
 using SambaClient.Shared.Exceptions;
 using SMBLibrary;
+using SMBLibrary.Client;
 
 namespace SambaClient.Infrastructure.Services;
 
 public class ConnectionManager : ISmbConnectionManager
 {
-    private static readonly string _connectionsFilePath = Path.Combine(
+    private static readonly string ConnectionsFilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "SambaClient",
         "connections.json"
@@ -32,7 +35,7 @@ public class ConnectionManager : ISmbConnectionManager
 
     private static void EnsureDirectoryExists()
     {
-        var directory = Path.GetDirectoryName(_connectionsFilePath);
+        var directory = Path.GetDirectoryName(ConnectionsFilePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
         {
             Directory.CreateDirectory(directory);
@@ -47,9 +50,9 @@ public class ConnectionManager : ISmbConnectionManager
             Uuid = Guid.NewGuid(),
             Name = request.Name,
             Host = request.Host,
+            ShareName = request.ShareName,
             Username = request.Username,
-            Password = request.Password,
-            IsConnected = false
+            Password = request.Password
         };
 
         var connections = await LoadConnectionsAsync(token);
@@ -61,12 +64,12 @@ public class ConnectionManager : ISmbConnectionManager
 
     public async Task<List<SmbServerConnection>> LoadConnectionsAsync(CancellationToken token)
     {
-        if (!File.Exists(_connectionsFilePath))
+        if (!File.Exists(ConnectionsFilePath))
         {
             return [];
         }
 
-        var fileInfo = new FileInfo(_connectionsFilePath);
+        var fileInfo = new FileInfo(ConnectionsFilePath);
         if (fileInfo.Length == 0)
         {
             return [];
@@ -74,7 +77,7 @@ public class ConnectionManager : ISmbConnectionManager
 
         try
         {
-            await using Stream connectionFileStream = File.OpenRead(_connectionsFilePath);
+            await using Stream connectionFileStream = File.OpenRead(ConnectionsFilePath);
 
             var loadedServerConnections = await JsonSerializer.DeserializeAsync<List<SmbServerConnection>>(
                 connectionFileStream,
@@ -110,9 +113,9 @@ public class ConnectionManager : ISmbConnectionManager
 
         connectionToUpdate.Name = connection.Name;
         connectionToUpdate.Host = connection.Host;
+        connectionToUpdate.ShareName = connection.ShareName;
         connectionToUpdate.Username = connection.Username;
         connectionToUpdate.Password = connection.Password;
-        connectionToUpdate.IsConnected = connection.IsConnected;
 
         await SaveConnectionsAsync(connections, token);
 
@@ -133,78 +136,120 @@ public class ConnectionManager : ISmbConnectionManager
 
     public async Task<ConnectionResponse> TestConnectionAsync(TestConnectionRequest request, CancellationToken token)
     {
-        var client = _smbClientProvider.GetSambaClient();
+        var (response, client) = await ConnectHelperAsync(
+            request.Host,
+            request.Username,
+            request.Password,
+            listShares: true,
+            token);
 
         try
         {
-            if (!IPAddress.TryParse(request.Host, out var ipAddress))
-            {
-                var hostEntry = await Dns.GetHostEntryAsync(request.Host, token);
-                ipAddress = hostEntry.AddressList.FirstOrDefault();
-                if (ipAddress == null)
-                {
-                    return new ConnectionResponse
-                    {
-                        IsSuccess = false,
-                        ErrorMessage = "Could not resolve hostname"
-                    };
-                }
-            }
-
-            bool connected = client.Connect(ipAddress, SMBTransportType.DirectTCPTransport);
-            if (!connected)
-            {
-                return new ConnectionResponse
-                {
-                    IsSuccess = false,
-                    ErrorMessage = "Failed to connect to SMB server"
-                };
-            }
-
-            NTStatus loginStatus = client.Login(string.Empty, request.Username, request.Password);
-            if (loginStatus != NTStatus.STATUS_SUCCESS)
-            {
-                return new ConnectionResponse
-                {
-                    IsSuccess = false,
-                    ErrorMessage = $"Authentication failed: {loginStatus}"
-                };
-            }
-
-            List<string> shareNames = client.ListShares(out NTStatus shareStatus);
-
-            return new ConnectionResponse
-            {
-                IsSuccess = true,
-                Shares = shareNames,
-            };
+            return response;
         }
-        catch (SocketException ex)
+        finally
         {
-            return new ConnectionResponse
-            {
-                IsSuccess = false,
-                ErrorMessage = $"Network error: {ex.Message}"
-            };
-        }
-        catch (Exception ex)
-        {
-            return new ConnectionResponse
-            {
-                IsSuccess = false,
-                ErrorMessage = $"Unexpected error: {ex.Message}"
-            };
+            client.Disconnect();
         }
     }
 
-    public Task<ConnectionResponse> ConnectAsync(Guid connectionUuid, CancellationToken token)
+    public async Task<ConnectionResponse> ConnectAsync(Guid connectionUuid, CancellationToken token)
     {
-        throw new NotImplementedException();
+        var connection = await GetConnectionAsync(connectionUuid, token);
+        var (response, client) = await ConnectHelperAsync(
+            connection.Host,
+            connection.Username,
+            connection.Password,
+            listShares: false,
+            token);
+
+        if (!response.IsSuccess)
+        {
+            client.Disconnect();
+        }
+
+        return response;
     }
+
 
     private async Task SaveConnectionsAsync(List<SmbServerConnection> connections, CancellationToken token)
     {
-        await using var fileStream = File.Create(_connectionsFilePath);
+        await using var fileStream = File.Create(ConnectionsFilePath);
         await JsonSerializer.SerializeAsync(fileStream, connections, _jsonSerializerOptions, token);
+    }
+
+    private async Task<(ConnectionResponse Response, SMB2Client Client)> ConnectHelperAsync(
+        string host,
+        string username,
+        string password,
+        bool listShares,
+        CancellationToken token)
+    {
+        var client = _smbClientProvider.GetSambaClient();
+        client.Disconnect();
+        
+        try
+        {
+            if (!IPAddress.TryParse(host, out var ipAddress))
+            {
+                var hostEntry = await Dns.GetHostEntryAsync(host, token);
+                ipAddress = hostEntry.AddressList.FirstOrDefault();
+                if (ipAddress == null)
+                {
+                    return (new ConnectionResponse
+                    {
+                        IsSuccess = false,
+                        ErrorMessage = "Could not resolve hostname"
+                    }, client);
+                }
+            }
+
+            if (!client.Connect(ipAddress, SMBTransportType.DirectTCPTransport))
+            {
+                return (new ConnectionResponse
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Failed to connect to SMB server"
+                }, client);
+            }
+
+            var loginStatus = client.Login(string.Empty, username, password);
+            if (loginStatus != NTStatus.STATUS_SUCCESS)
+            {
+                return (new ConnectionResponse
+                {
+                    IsSuccess = false,
+                    ErrorMessage = $"Authentication failed: {loginStatus}"
+                }, client);
+            }
+
+            List<string>? shares = null;
+            if (listShares)
+            {
+                shares = client.ListShares(out _);
+            }
+
+            return (new ConnectionResponse
+            {
+                IsSuccess = true,
+                Shares = shares
+            }, client);
+        }
+        catch (SocketException ex)
+        {
+            return (new ConnectionResponse
+            {
+                IsSuccess = false,
+                ErrorMessage = $"Network error: {ex.Message}"
+            }, client);
+        }
+        catch (Exception ex)
+        {
+            return (new ConnectionResponse
+            {
+                IsSuccess = false,
+                ErrorMessage = $"Unexpected error: {ex.Message}"
+            }, client);
+        }
     }
 }

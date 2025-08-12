@@ -2,9 +2,8 @@ namespace SambaClient.Core.Entities;
 
 public class FileEntity
 {
+    public uint FileIndex { get; set; }
     public string FileName { get; set; }
-
-    public string FullPath { get; set; }
 
     public bool IsDirectory { get; set; }
 

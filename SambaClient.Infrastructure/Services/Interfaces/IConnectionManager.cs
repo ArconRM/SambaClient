@@ -1,4 +1,6 @@
 using SambaClient.Core.DTOs;
+using SambaClient.Core.DTOs.Requests;
+using SambaClient.Core.DTOs.Responses;
 using SambaClient.Core.Entities;
 
 namespace SambaClient.Infrastructure.Services.Interfaces;
