@@ -24,6 +24,5 @@ public partial class MainWindow : Window
             };
             m.Reply(dialog.ShowDialog<SmbServerConnection?>(w));
         });
-
     }
 }

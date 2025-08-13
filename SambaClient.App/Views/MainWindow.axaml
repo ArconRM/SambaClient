@@ -9,10 +9,6 @@
         Icon="/Assets/avalonia-logo.ico"
         Title="Samba File Manager">
 
-    <Design.DataContext>
-        <vm:MainWindowViewModel />
-    </Design.DataContext>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" /> <!-- Connection controls -->
@@ -53,7 +49,7 @@
                             Command="{Binding DisconnectFromServerCommand}"
                             IsVisible="{Binding IsConnected}"
                             Padding="10,5" />
-                    
+
                     <Button Content="Delete"
                             Command="{Binding DeleteConnectionCommand}"
                             Padding="10,5" />
