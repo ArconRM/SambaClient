@@ -7,7 +7,7 @@ namespace SambaClient.Infrastructure.Services.Interfaces;
 
 public interface ISmbService
 {
-    Task<GetFilesResponse> GetAllFilesAsync(Guid connectionUuid, CancellationToken token);
+    Task<GetFilesResponse> GetAllFilesAsync(Guid connectionUuid, string innerPath, CancellationToken token);
     
     Task<Stream> DownloadFileAsync(FileRequest request, CancellationToken token);
     

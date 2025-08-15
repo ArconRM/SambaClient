@@ -17,7 +17,7 @@
         </Grid.RowDefinitions>
 
         <!-- Connection Controls Panel -->
-        <Border Grid.Row="0" 
+        <Border Grid.Row="0"
                 Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                 BorderThickness="0,0,0,1"
@@ -26,8 +26,8 @@
 
                 <!-- Connection Selection Row -->
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                    <TextBlock Text="Connection:" 
-                               VerticalAlignment="Center" 
+                    <TextBlock Text="Connection:"
+                               VerticalAlignment="Center"
                                Width="80"
                                Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
 
@@ -64,13 +64,15 @@
 
                 <!-- Connection Status -->
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                    <TextBlock Text="Status:" 
-                               VerticalAlignment="Center" 
+                    <TextBlock Text="Status:"
+                               VerticalAlignment="Center"
                                Width="80"
                                Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    
                     <TextBlock Text="{Binding ConnectionStatus}"
                                Foreground="{Binding ConnectionStatusColor}"
                                VerticalAlignment="Center" />
+                    
                     <TextBlock Text="{Binding StatusMessage}"
                                VerticalAlignment="Center"
                                Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
@@ -80,9 +82,9 @@
         </Border>
 
         <!-- File Browser Area -->
-        <Border Grid.Row="1" 
-                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
-                BorderThickness="1" 
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="1"
                 Margin="10">
             <Grid>
                 <Grid.RowDefinitions>
@@ -91,21 +93,27 @@
                 </Grid.RowDefinitions>
 
                 <!-- Current Path -->
-                <Border Grid.Row="0" 
-                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
-                        Padding="5" 
-                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+                <Border Grid.Row="0"
+                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                        Padding="5"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                         BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="Path:" 
+                        <Button Content="Back"
+                                Command="{Binding MoveToParentFolderCommand}"
+                                IsEnabled="{Binding IsConnected}"
+                                Padding="8,4" />
+
+                        <TextBlock Text="Path:"
                                    VerticalAlignment="Center"
                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+
                         <TextBox Text="{Binding CurrentPath}"
                                  IsReadOnly="True"
                                  Background="Transparent"
                                  BorderThickness="0"
-                                 VerticalAlignment="Center"
-                                 Width="300" />
+                                 VerticalAlignment="Center" />
+
                         <Button Content="Refresh"
                                 Command="{Binding RefreshFilesCommand}"
                                 IsEnabled="{Binding IsConnected}"
@@ -118,6 +126,7 @@
                           ItemsSource="{Binding Files}"
                           SelectedItem="{Binding SelectedFile}"
                           IsReadOnly="True"
+                          DoubleTapped="OnDataGridDoubleTapped"
                           GridLinesVisibility="Horizontal"
                           HeadersVisibility="Column"
                           Margin="5">
@@ -149,18 +158,20 @@
         </Border>
 
         <!-- Status Bar -->
-        <Border Grid.Row="2" 
-                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
-                Padding="10,5" 
-                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+        <Border Grid.Row="2"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                Padding="10,5"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                 BorderThickness="0,1,0,0">
             <StackPanel Orientation="Horizontal" Spacing="20">
                 <TextBlock Text="{Binding Files.Count, StringFormat='Items: {0}'}"
                            Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                            IsVisible="{Binding IsConnected}" />
+
                 <TextBlock Text="{Binding CurrentSmbServerConnection.Host, StringFormat='Host: {0}'}"
                            Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                            IsVisible="{Binding IsConnected}" />
+
                 <TextBlock Text="{Binding CurrentSmbServerConnection.Username, StringFormat='User: {0}'}"
                            Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                            IsVisible="{Binding IsConnected}" />

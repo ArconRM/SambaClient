@@ -78,15 +78,11 @@ public partial class AddConnectionViewModel : ViewModelBase
     private void UpdateCanExecuteStates()
     {
         CanTestConnection = !string.IsNullOrWhiteSpace(ConnectionHost) &&
-                            !string.IsNullOrWhiteSpace(Username) &&
-                            !string.IsNullOrWhiteSpace(ShareName) &&
                             !IsTestInProgress;
 
         CanSave = !string.IsNullOrWhiteSpace(ConnectionName) &&
                   !string.IsNullOrWhiteSpace(ConnectionHost) &&
-                  !string.IsNullOrWhiteSpace(ShareName) &&
-                  !string.IsNullOrWhiteSpace(Username) &&
-                  !string.IsNullOrWhiteSpace(Password);
+                  !string.IsNullOrWhiteSpace(ShareName);
 
         TestConnectionCommand.NotifyCanExecuteChanged();
         SaveConnectionCommand.NotifyCanExecuteChanged();

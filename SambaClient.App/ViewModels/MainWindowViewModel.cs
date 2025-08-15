@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -31,7 +32,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private FileEntity? selectedFile;
 
     [ObservableProperty]
-    private string currentPath = "/";
+    private string currentPath = "";
 
     [ObservableProperty]
     private string connectionStatus = "Not connected";
@@ -136,7 +137,8 @@ public partial class MainWindowViewModel : ViewModelBase
         if (CurrentSmbServerConnection is null) return;
 
         try
-        {
+        { 
+            DisconnectFromServer();
             await _connectionManager.RemoveConnectionAsync(CurrentSmbServerConnection.Uuid, CancellationToken.None);
 
             SmbServerConnections.Remove(CurrentSmbServerConnection);
@@ -245,7 +247,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
-            var response = await _smbService.GetAllFilesAsync(CurrentSmbServerConnection.Uuid, CancellationToken.None);
+            var response = await _smbService.GetAllFilesAsync(CurrentSmbServerConnection.Uuid, CurrentPath, CancellationToken.None);
 
             if (response.IsSuccess)
             {
@@ -274,8 +276,26 @@ public partial class MainWindowViewModel : ViewModelBase
             IsLoading = false;
         }
     }
+    
 
-    // Converter for file type display
+    [RelayCommand]
+    public async Task MoveToInnerFolderAsync()
+    {
+        if (SelectedFile is null || !SelectedFile.IsDirectory) return;
+
+        CurrentPath = Path.Combine(CurrentPath, SelectedFile.FileName);
+        await RefreshFilesAsync();
+    }
+
+    [RelayCommand]
+    private async Task MoveToParentFolderAsync()
+    {
+        if (string.IsNullOrEmpty(CurrentPath)) return;
+
+        CurrentPath = Path.GetDirectoryName(CurrentPath);
+        await RefreshFilesAsync();
+    }
+    
     public static readonly IValueConverter FileTypeConverter =
         new FuncValueConverter<bool, string>(isDirectory => isDirectory ? "Folder" : "File");
 }

@@ -7,7 +7,7 @@
         x:Class="SambaClient.App.Views.AddConnectionDialog"
         x:DataType="vm:AddConnectionViewModel"
         Title="Add SMB Connection"
-        Width="450"
+        Width="550"
         SizeToContent="Height"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
@@ -97,21 +97,18 @@
                     <Button Content="Test Connection" 
                             Command="{Binding TestConnectionCommand}"
                             IsEnabled="{Binding CanTestConnection}"
-                            Padding="10,5"
-                            Width="120"/>
+                            Padding="10,5"/>
                     
                     <Button Content="Save" 
                             Command="{Binding SaveConnectionCommand}"
                             IsEnabled="{Binding CanSave}"
                             IsDefault="True"
-                            Padding="10,5"
-                            Width="80"/>
+                            Padding="10,5"/>
                     
                     <Button Content="Cancel" 
                             Command="{Binding CancelCommand}"
                             IsCancel="True"
-                            Padding="10,5"
-                            Width="80"/>
+                            Padding="10,5"/>
                 </StackPanel>
             </Border>
         </Grid>

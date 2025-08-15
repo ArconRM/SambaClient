@@ -25,4 +25,18 @@ public partial class MainWindow : Window
             m.Reply(dialog.ShowDialog<SmbServerConnection?>(w));
         });
     }
+    
+    private async void OnDataGridDoubleTapped(object sender, Avalonia.Input.TappedEventArgs e)
+    {
+        var dataGrid = sender as DataGrid;
+        var vm = (MainWindowViewModel)DataContext;
+
+        var selectedItem = dataGrid?.SelectedItem;
+        if (selectedItem != null && vm != null)
+        {
+            await vm.MoveToInnerFolderAsync();
+        }
+    }
+
+    
 }

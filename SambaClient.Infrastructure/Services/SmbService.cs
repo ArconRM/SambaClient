@@ -22,55 +22,7 @@ public class SmbService : ISmbService
         _clientProvider = clientProvider;
     }
 
-    public async Task<GetFilesResponse> GetAllFilesAsync(Guid connectionUuid, CancellationToken token)
-    {
-        try
-        {
-            var fileStore = await GetVerifiedClientAsync(connectionUuid, token)
-                            ?? throw new InvalidOperationException("No active share for this connection.");
-            object directoryHandle;
-            var status = fileStore.CreateFile(out directoryHandle, out _, String.Empty, AccessMask.GENERIC_READ, FileAttributes.Directory, ShareAccess.Read | ShareAccess.Write, CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-            if (status == NTStatus.STATUS_SUCCESS)
-            {
-                List<QueryDirectoryFileInformation> fileList;
-                status = fileStore.QueryDirectory(out fileList, directoryHandle, "*", FileInformationClass.FileDirectoryInformation);
-                status = fileStore.CloseFile(directoryHandle);
 
-                return new GetFilesResponse()
-                {
-                    IsSuccess = true,
-                    Files = fileList
-                        .OfType<FileDirectoryInformation>()
-                        .Select(f => new FileEntity()
-                        {
-                            FileIndex = f.FileIndex,
-                            FileName = f.FileName,
-                            Size = f.EndOfFile,
-                            IsDirectory = (f.FileAttributes & FileAttributes.Directory) != 0,
-                            ModifiedDate = f.ChangeTime
-                        }).ToList()
-                };
-            }
-            else
-            {
-                return new GetFilesResponse()
-                {
-                    IsSuccess = false,
-                    ErrorMessage = $"Failed to list directory: {status}",
-                };
-            }
-        }
-        catch (Exception ex)
-        {
-            return new GetFilesResponse()
-            {
-                IsSuccess = false,
-                ErrorMessage = ex.Message
-            };
-        }
-    }
-    
-    
     private async Task<ISMBFileStore> GetVerifiedClientAsync(Guid connectionUuid, CancellationToken token)
     {
         var connection = await _connectionManager.GetConnectionAsync(connectionUuid, token);
@@ -88,6 +40,68 @@ public class SmbService : ISmbService
         //     throw new InvalidOperationException($"Share not accessible: {status}");
 
         return fileStore;
+    }
+
+
+    public async Task<GetFilesResponse> GetAllFilesAsync(Guid connectionUuid,
+        string innerPath,
+        CancellationToken token)
+    {
+        try
+        {
+            var fileStore = await GetVerifiedClientAsync(connectionUuid, token)
+                            ?? throw new InvalidOperationException("No active share for this connection.");
+            object directoryHandle;
+            var status = fileStore.CreateFile(out directoryHandle,
+                out _,
+                innerPath,
+                AccessMask.GENERIC_READ,
+                FileAttributes.Directory,
+                ShareAccess.Read | ShareAccess.Write,
+                CreateDisposition.FILE_OPEN,
+                CreateOptions.FILE_DIRECTORY_FILE,
+                null);
+
+            if (status == NTStatus.STATUS_SUCCESS)
+            {
+                List<QueryDirectoryFileInformation> fileList;
+
+                status = fileStore.QueryDirectory(out fileList,
+                    directoryHandle,
+                    "*",
+                    FileInformationClass.FileDirectoryInformation);
+                status = fileStore.CloseFile(directoryHandle);
+
+                return new GetFilesResponse()
+                {
+                    IsSuccess = true,
+                    Files = fileList
+                        .OfType<FileDirectoryInformation>()
+                        .Select(f => new FileEntity()
+                        {
+                            FileIndex = f.FileIndex,
+                            FileName = f.FileName,
+                            Size = f.EndOfFile,
+                            IsDirectory = (f.FileAttributes & FileAttributes.Directory) != 0,
+                            ModifiedDate = f.ChangeTime
+                        }).ToList()
+                };
+            }
+
+            return new GetFilesResponse()
+            {
+                IsSuccess = false,
+                ErrorMessage = $"Failed to list directory: {status}",
+            };
+        }
+        catch (Exception ex)
+        {
+            return new GetFilesResponse()
+            {
+                IsSuccess = false,
+                ErrorMessage = ex.Message
+            };
+        }
     }
 
     public async Task<Stream> DownloadFileAsync(FileRequest request, CancellationToken token)
