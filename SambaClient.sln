@@ -6,8 +6,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SambaClient.Core", "SambaCl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SambaClient.Infrastructure", "SambaClient.Infrastructure\SambaClient.Infrastructure.csproj", "{5F968B57-9C49-427B-8386-A2E9474DE1C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SambaClient.Shared", "SambaClient.Shared\SambaClient.Shared.csproj", "{A0E41A15-56A1-4C96-9BF6-90747812740D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,9 +24,5 @@ Global
 		{5F968B57-9C49-427B-8386-A2E9474DE1C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F968B57-9C49-427B-8386-A2E9474DE1C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5F968B57-9C49-427B-8386-A2E9474DE1C6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A0E41A15-56A1-4C96-9BF6-90747812740D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A0E41A15-56A1-4C96-9BF6-90747812740D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A0E41A15-56A1-4C96-9BF6-90747812740D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A0E41A15-56A1-4C96-9BF6-90747812740D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

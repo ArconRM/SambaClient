@@ -5,8 +5,8 @@ using SambaClient.Core.DTOs;
 using SambaClient.Core.DTOs.Requests;
 using SambaClient.Core.DTOs.Responses;
 using SambaClient.Core.Entities;
+using SambaClient.Core.Exceptions;
 using SambaClient.Infrastructure.Services.Interfaces;
-using SambaClient.Shared.Exceptions;
 using SMBLibrary;
 using SMBLibrary.Client;
 

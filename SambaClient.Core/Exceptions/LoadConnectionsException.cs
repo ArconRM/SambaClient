@@ -1,4 +1,4 @@
-namespace SambaClient.Shared.Exceptions;
+namespace SambaClient.Core.Exceptions;
 
 public class LoadConnectionsException : Exception
 {
