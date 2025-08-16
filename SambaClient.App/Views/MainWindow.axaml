@@ -111,7 +111,7 @@
                         <Button Grid.Column="0"
                                 Content="Back"
                                 Command="{Binding MoveToParentFolderCommand}"
-                                IsEnabled="{Binding IsConnected}"
+                                IsEnabled="{Binding CurrentPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                 Padding="8,4" />
 
                         <!-- Path Label -->
@@ -162,7 +162,7 @@
                         <Style Selector="DataGridRow">
                             <Setter Property="ContextMenu">
                                 <ContextMenu>
-                                    <MenuItem Header="Load" 
+                                    <MenuItem Header="Download" 
                                               Command="{Binding $parent[DataGrid].DataContext.DownloadFileCommand}"
                                               CommandParameter="{Binding}"/>
                                     <MenuItem Header="Delete"
