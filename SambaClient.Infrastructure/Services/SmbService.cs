@@ -23,7 +23,7 @@ public class SmbService : ISmbService
     }
 
 
-    private async Task<ISMBFileStore> GetVerifiedClientAsync(Guid connectionUuid, CancellationToken token)
+    private async Task<ISMBFileStore> GetVerifiedFileStoreAsync(Guid connectionUuid, CancellationToken token)
     {
         var connection = await _connectionManager.GetConnectionAsync(connectionUuid, token);
         var client = _clientProvider.GetSambaClient();
@@ -43,13 +43,14 @@ public class SmbService : ISmbService
     }
 
 
-    public async Task<GetFilesResponse> GetAllFilesAsync(Guid connectionUuid,
+    public async Task<GetFilesResponse> GetAllFilesAsync(
+        Guid connectionUuid,
         string innerPath,
         CancellationToken token)
     {
         try
         {
-            var fileStore = await GetVerifiedClientAsync(connectionUuid, token)
+            var fileStore = await GetVerifiedFileStoreAsync(connectionUuid, token)
                             ?? throw new InvalidOperationException("No active share for this connection.");
             object directoryHandle;
             var status = fileStore.CreateFile(out directoryHandle,
@@ -104,17 +105,100 @@ public class SmbService : ISmbService
         }
     }
 
-    public async Task<Stream> DownloadFileAsync(FileRequest request, CancellationToken token)
+    public async Task<DownloadFileResponse> DownloadFileAsync(FileRequest request, CancellationToken token)
     {
-        var client = await GetVerifiedClientAsync(request.ConnectionUuid, token);
-        throw new NotImplementedException();
+        try
+        {
+            var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);
+
+            var status = fileStore.CreateFile(
+                out var fileHandle,
+                out var fileStatus,
+                request.TargetRemotePath,
+                AccessMask.GENERIC_READ,
+                FileAttributes.Normal,
+                ShareAccess.Read,
+                CreateDisposition.FILE_OPEN,
+                CreateOptions.FILE_NON_DIRECTORY_FILE | CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT,
+                null);
+
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                throw new FileNotFoundException($"Unable to open remote file: {status}");
+            }
+
+            status = fileStore.GetFileInformation(out var fileInfo, fileHandle, FileInformationClass.FileStandardInformation);
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                fileStore.CloseFile(fileHandle);
+                throw new IOException($"Unable to get file information: {status}");
+            }
+
+            var standardInfo = (FileStandardInformation)fileInfo;
+            var fileSize = standardInfo.EndOfFile;
+
+            var memoryStream = new MemoryStream();
+
+            try
+            {
+                var client = _clientProvider.GetSambaClient();
+                var buffer = new byte[client.MaxReadSize];
+                long offset = 0;
+
+                while (offset < fileSize)
+                {
+                    var bytesToRead = (int)Math.Min(buffer.Length, fileSize - offset);
+                
+                    status = fileStore.ReadFile(out byte[] data, fileHandle, offset, bytesToRead);
+                    if (status != NTStatus.STATUS_SUCCESS)
+                    {
+                        throw new IOException($"Read failed at offset {offset}: {status}");
+                    }
+
+                    if (data == null || data.Length == 0)
+                        break;
+
+                    await memoryStream.WriteAsync(data, 0, data.Length, token);
+                    offset += data.Length;
+                }
+
+                memoryStream.Position = 0;
+                return new DownloadFileResponse
+                {
+                    IsSuccess = true,
+                    Stream = memoryStream
+                };
+            }
+            catch (Exception ex)
+            {
+                await memoryStream.DisposeAsync();
+                return new DownloadFileResponse
+                {
+                    IsSuccess = false,
+                    ErrorMessage = ex.Message
+                };
+            }
+            finally
+            {
+                fileStore.CloseFile(fileHandle);
+            }
+        }
+        catch (Exception ex)
+        {
+            return new DownloadFileResponse
+            {
+                IsSuccess = false,
+                ErrorMessage = $"Failed to download file: {ex.Message}"
+            };
+        }
     }
+
 
     public async Task<BaseResponse> UploadFileAsync(UploadFileRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var fileStore = await GetVerifiedClientAsync(request.ConnectionUuid, cancellationToken);
+            var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, cancellationToken);
             var path = request.TargetRemotePath;
 
             var status = fileStore.CreateFile(
@@ -167,7 +251,31 @@ public class SmbService : ISmbService
 
     public async Task<BaseResponse> DeleteFileAsync(FileRequest request, CancellationToken token)
     {
-        var client = await GetVerifiedClientAsync(request.ConnectionUuid, token);
-        throw new NotImplementedException();
+        var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);
+        var remoteFilePath = request.TargetRemotePath;
+
+        var status = fileStore.CreateFile(
+            out var fileHandle,
+            out _,
+            remoteFilePath,
+            AccessMask.DELETE,
+            FileAttributes.Normal,
+            ShareAccess.None,
+            CreateDisposition.FILE_OPEN,
+            CreateOptions.FILE_NON_DIRECTORY_FILE,
+            null);
+
+        if (status != NTStatus.STATUS_SUCCESS)
+            return new BaseResponse { IsSuccess = false, ErrorMessage = $"Failed to open file: {status}" };
+
+        FileDispositionInformation fileDispositionInformation = new FileDispositionInformation();
+        fileDispositionInformation.DeletePending = true;
+        status = fileStore.SetFileInformation(fileHandle, fileDispositionInformation);
+        bool deleteSucceeded = (status == NTStatus.STATUS_SUCCESS);
+        status = fileStore.CloseFile(fileHandle);
+
+        return status == NTStatus.STATUS_SUCCESS && deleteSucceeded
+            ? new BaseResponse { IsSuccess = true }
+            : new BaseResponse { IsSuccess = false, ErrorMessage = $"Failed to delete file: {status}" };
     }
 }

@@ -157,6 +157,22 @@
                           GridLinesVisibility="Horizontal"
                           HeadersVisibility="Column"
                           Margin="5">
+                    
+                    <DataGrid.Styles>
+                        <Style Selector="DataGridRow">
+                            <Setter Property="ContextMenu">
+                                <ContextMenu>
+                                    <MenuItem Header="Load" 
+                                              Command="{Binding $parent[DataGrid].DataContext.DownloadFileCommand}"
+                                              CommandParameter="{Binding}"/>
+                                    <MenuItem Header="Delete"
+                                              Command="{Binding $parent[DataGrid].DataContext.DeleteFileCommand}"
+                                              CommandParameter="{Binding}"/>
+                                </ContextMenu>
+                            </Setter>
+                        </Style>
+                    </DataGrid.Styles>
+
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Name"
                                             Binding="{Binding FileName}"

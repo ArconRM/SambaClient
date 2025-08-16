@@ -25,4 +25,27 @@ public class FileDialogService : IFileDialogService
         var files = await provider.OpenFilePickerAsync(options);
         return files.Count >= 1 ? files[0] : null;
     }
+
+    public async Task<IStorageFile?> SaveFileDialogAsync(
+        string title,
+        WellKnownFolder suggestedStartLocation,
+        string suggestedFileName,
+        string extension)
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop ||
+            desktop.MainWindow?.StorageProvider is not { } provider)
+        {
+            return null;
+        }
+
+        var options = new FilePickerSaveOptions
+        {
+            Title = title,
+            SuggestedFileName = suggestedFileName,
+            DefaultExtension = extension,
+            SuggestedStartLocation = await provider.TryGetWellKnownFolderAsync(suggestedStartLocation)
+        };
+
+        return await provider.SaveFilePickerAsync(options);
+    }
 }

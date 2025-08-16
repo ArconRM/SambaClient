@@ -9,7 +9,7 @@ public interface ISmbService
 {
     Task<GetFilesResponse> GetAllFilesAsync(Guid connectionUuid, string innerPath, CancellationToken token);
     
-    Task<Stream> DownloadFileAsync(FileRequest request, CancellationToken token);
+    Task<DownloadFileResponse> DownloadFileAsync(FileRequest request, CancellationToken token);
     
     Task<BaseResponse> UploadFileAsync(UploadFileRequest request, CancellationToken token);
     

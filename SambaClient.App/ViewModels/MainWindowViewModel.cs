@@ -8,12 +8,14 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using SambaClient.App.Messages;
 using SambaClient.App.Services.Interfaces;
 using SambaClient.Core.DTOs.Requests;
+using SambaClient.Core.DTOs.Responses;
 using SambaClient.Core.Entities;
 using SambaClient.Infrastructure.Services.Interfaces;
 
@@ -39,6 +41,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private string currentPath = "";
+
+    private string selectedFilePath => Path.Combine(CurrentPath, SelectedFile.FileName);
 
     [ObservableProperty]
     private string connectionStatus = "Not connected";
@@ -150,7 +154,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (CurrentSmbServerConnection is not null)
             DisconnectFromServer();
-        
+
         var serverConnection = await WeakReferenceMessenger.Default.Send(new AddConnectionMessage());
 
         if (serverConnection != null)
@@ -319,7 +323,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (SelectedFile is null || !SelectedFile.IsDirectory) return;
 
-        CurrentPath = Path.Combine(CurrentPath, SelectedFile.FileName);
+        CurrentPath = selectedFilePath;
         await RefreshFilesAsync();
     }
 
@@ -330,6 +334,49 @@ public partial class MainWindowViewModel : ViewModelBase
 
         CurrentPath = Path.GetDirectoryName(CurrentPath);
         await RefreshFilesAsync();
+    }
+
+    [RelayCommand]
+    private async Task DownloadFileAsync()
+    {
+        if (CurrentSmbServerConnection is null || SelectedFile is null) return;
+
+        try
+        {
+            var saveFile = await _fileDialogService.SaveFileDialogAsync(
+                "Save file as",
+                WellKnownFolder.Downloads,
+                Path.GetFileNameWithoutExtension(SelectedFile.FileName),
+                Path.GetExtension(SelectedFile.FileName));
+
+            var token = GetNewCancellationToken();
+
+            var request = new FileRequest()
+            {
+                ConnectionUuid = CurrentSmbServerConnection.Uuid,
+                TargetRemotePath = selectedFilePath
+            };
+
+            DownloadFileResponse response = await _smbService.DownloadFileAsync(request, token);
+
+            if (response.IsSuccess)
+            {
+
+                using var fileStream = await saveFile.OpenWriteAsync();
+
+                await response.Stream.CopyToAsync(fileStream, token);
+
+                StatusMessage = $"File downloaded successfully to: {saveFile.Name}";
+            }
+            else
+            {
+                StatusMessage = $"Error downloading file: {response.ErrorMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error downloading file: {ex.Message}";
+        }
     }
 
     [RelayCommand]
@@ -369,6 +416,39 @@ public partial class MainWindowViewModel : ViewModelBase
         catch (Exception ex)
         {
             StatusMessage = $"Error uploading file: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteFileAsync()
+    {
+        if (CurrentSmbServerConnection is null || SelectedFile is null) return;
+
+        try
+        {
+            var token = GetNewCancellationToken();
+
+            var request = new FileRequest()
+            {
+                ConnectionUuid = CurrentSmbServerConnection.Uuid,
+                TargetRemotePath = selectedFilePath
+            };
+
+            var response = await _smbService.DeleteFileAsync(request, token);
+
+            if (response.IsSuccess)
+            {
+                StatusMessage = $"Deleted file";
+                await RefreshFilesAsync();
+            }
+            else
+            {
+                StatusMessage = $"Error deleting file: {response.ErrorMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error deleting file: {ex.Message}";
         }
     }
 
