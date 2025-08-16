@@ -6,6 +6,8 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using SambaClient.App.Services;
+using SambaClient.App.Services.Interfaces;
 using SambaClient.App.ViewModels;
 using SambaClient.App.Views;
 using SambaClient.Infrastructure.Services;
@@ -56,15 +58,18 @@ public partial class App : Application
     
     private static void ConfigureServices(IServiceCollection services)
     {
+        services.AddSingleton<IFileDialogService, FileDialogService>();
+
         services.AddSingleton<ISmbClientProvider, SmbClientProvider>();
         services.AddSingleton<ISmbConnectionManager, ConnectionManager>();
         services.AddSingleton<ISmbService, SmbService>();
         
         services.AddTransient<MainWindowViewModel>(provider =>
         {
+            var fileDialogService = provider.GetRequiredService<IFileDialogService>();
             var connectionManager = provider.GetRequiredService<ISmbConnectionManager>();
             var smbService = provider.GetRequiredService<ISmbService>();
-            return new MainWindowViewModel(connectionManager, smbService);
+            return new MainWindowViewModel(fileDialogService, connectionManager, smbService);
         });
         
         services.AddTransient<AddConnectionViewModel>(provider =>

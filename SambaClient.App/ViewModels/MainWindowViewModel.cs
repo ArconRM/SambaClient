@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -11,6 +12,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using SambaClient.App.Messages;
+using SambaClient.App.Services.Interfaces;
 using SambaClient.Core.DTOs.Requests;
 using SambaClient.Core.Entities;
 using SambaClient.Infrastructure.Services.Interfaces;
@@ -19,6 +21,10 @@ namespace SambaClient.App.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
+    private CancellationTokenSource _cts = new();
+
+    private readonly IFileDialogService _fileDialogService;
+
     private readonly ISmbConnectionManager _connectionManager;
     private readonly ISmbService _smbService;
 
@@ -52,13 +58,17 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool isLoading;
 
-    public MainWindowViewModel() : this(null!,
+    public MainWindowViewModel() : this(
+        null!,
+        null!,
         null!) { }
 
     public MainWindowViewModel(
+        IFileDialogService fileDialogService,
         ISmbConnectionManager connectionManager,
         ISmbService smbService)
     {
+        _fileDialogService = fileDialogService;
         _connectionManager = connectionManager;
         _smbService = smbService;
 
@@ -74,6 +84,7 @@ public partial class MainWindowViewModel : ViewModelBase
             case nameof(CurrentSmbServerConnection):
                 UpdateCanConnect();
                 TestConnectionCommand.NotifyCanExecuteChanged();
+                DisconnectFromServer();
                 break;
             case nameof(IsConnected):
                 RefreshFilesCommand.NotifyCanExecuteChanged();
@@ -102,11 +113,26 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    private CancellationToken GetNewCancellationToken()
+    {
+        try
+        {
+            _cts.Cancel();
+        }
+        catch { }
+
+        _cts.Dispose();
+        _cts = new CancellationTokenSource();
+        return _cts.Token;
+    }
+
     private async Task LoadConnections()
     {
         try
         {
-            var response = await _connectionManager.LoadConnectionsAsync(CancellationToken.None);
+            var token = GetNewCancellationToken();
+
+            var response = await _connectionManager.LoadConnectionsAsync(token);
             SmbServerConnections.Clear();
             foreach (var connection in response)
             {
@@ -122,6 +148,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task ShowAddConnectionDialogAsync()
     {
+        if (CurrentSmbServerConnection is not null)
+            DisconnectFromServer();
+        
         var serverConnection = await WeakReferenceMessenger.Default.Send(new AddConnectionMessage());
 
         if (serverConnection != null)
@@ -137,9 +166,11 @@ public partial class MainWindowViewModel : ViewModelBase
         if (CurrentSmbServerConnection is null) return;
 
         try
-        { 
+        {
+            var token = GetNewCancellationToken();
+
             DisconnectFromServer();
-            await _connectionManager.RemoveConnectionAsync(CurrentSmbServerConnection.Uuid, CancellationToken.None);
+            await _connectionManager.RemoveConnectionAsync(CurrentSmbServerConnection.Uuid, token);
 
             SmbServerConnections.Remove(CurrentSmbServerConnection);
             CurrentSmbServerConnection = null;
@@ -161,8 +192,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
-            var testResponse =
-                await _connectionManager.ConnectAsync(CurrentSmbServerConnection.Uuid, CancellationToken.None);
+            var token = GetNewCancellationToken();
+
+            var testResponse = await _connectionManager.ConnectAsync(CurrentSmbServerConnection.Uuid, token);
 
             if (testResponse.IsSuccess)
             {
@@ -209,6 +241,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
+            var token = GetNewCancellationToken();
+
             var request = new TestConnectionRequest
             {
                 Host = CurrentSmbServerConnection.Host,
@@ -216,7 +250,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 Password = CurrentSmbServerConnection.Password
             };
 
-            var response = await _connectionManager.TestConnectionAsync(request, CancellationToken.None);
+            var response = await _connectionManager.TestConnectionAsync(request, token);
 
             if (response.IsSuccess)
             {
@@ -247,7 +281,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
-            var response = await _smbService.GetAllFilesAsync(CurrentSmbServerConnection.Uuid, CurrentPath, CancellationToken.None);
+            var token = GetNewCancellationToken();
+
+            var response = await _smbService.GetAllFilesAsync(CurrentSmbServerConnection.Uuid, CurrentPath, token);
 
             if (response.IsSuccess)
             {
@@ -256,7 +292,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 {
                     if (file.FileName.StartsWith("."))
                         continue;
-                    
+
                     Files.Add(file);
                 }
 
@@ -276,7 +312,7 @@ public partial class MainWindowViewModel : ViewModelBase
             IsLoading = false;
         }
     }
-    
+
 
     [RelayCommand]
     public async Task MoveToInnerFolderAsync()
@@ -295,7 +331,47 @@ public partial class MainWindowViewModel : ViewModelBase
         CurrentPath = Path.GetDirectoryName(CurrentPath);
         await RefreshFilesAsync();
     }
-    
+
+    [RelayCommand]
+    private async Task UploadFileAsync()
+    {
+        if (CurrentSmbServerConnection is null) return;
+
+        try
+        {
+            var token = GetNewCancellationToken();
+
+            var file = await _fileDialogService.OpenFileDialogAsync("Select a file");
+            if (file is null) return;
+
+            await using var stream = await file.OpenReadAsync();
+
+            var request = new UploadFileRequest()
+            {
+                ConnectionUuid = CurrentSmbServerConnection.Uuid,
+                TargetRemotePath = Path.Combine(CurrentPath, file.Name),
+                SourceStream = stream,
+                OverwriteIfExists = false,
+            };
+
+            var response = await _smbService.UploadFileAsync(request, token);
+
+            if (response.IsSuccess)
+            {
+                StatusMessage = $"Uploaded new file to share";
+                await RefreshFilesAsync();
+            }
+            else
+            {
+                StatusMessage = $"Error uploading file: {response.ErrorMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error uploading file: {ex.Message}";
+        }
+    }
+
     public static readonly IValueConverter FileTypeConverter =
         new FuncValueConverter<bool, string>(isDirectory => isDirectory ? "Folder" : "File");
 }

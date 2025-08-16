@@ -118,6 +118,12 @@
                                 Command="{Binding RefreshFilesCommand}"
                                 IsEnabled="{Binding IsConnected}"
                                 Padding="8,4" />
+                        
+                        <Button Content="Upload"
+                                Command="{Binding UploadFileCommand}"
+                                IsEnabled="{Binding IsConnected}"
+                                Padding="8,4" />
+
                     </StackPanel>
                 </Border>
 

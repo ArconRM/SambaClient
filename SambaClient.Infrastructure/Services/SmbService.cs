@@ -110,10 +110,59 @@ public class SmbService : ISmbService
         throw new NotImplementedException();
     }
 
-    public async Task<BaseResponse> UploadFileAsync(UploadFileRequest request, CancellationToken token)
+    public async Task<BaseResponse> UploadFileAsync(UploadFileRequest request, CancellationToken cancellationToken)
     {
-        var client = await GetVerifiedClientAsync(request.ConnectionUuid, token);
-        throw new NotImplementedException();
+        try
+        {
+            var fileStore = await GetVerifiedClientAsync(request.ConnectionUuid, cancellationToken);
+            var path = request.TargetRemotePath;
+
+            var status = fileStore.CreateFile(
+                out var fileHandle,
+                out _,
+                path,
+                AccessMask.GENERIC_WRITE,
+                FileAttributes.Normal,
+                ShareAccess.None,
+                request.OverwriteIfExists ? CreateDisposition.FILE_OVERWRITE_IF : CreateDisposition.FILE_CREATE,
+                CreateOptions.FILE_NON_DIRECTORY_FILE | CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT,
+                null);
+
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                return new BaseResponse
+                {
+                    IsSuccess = false,
+                    ErrorMessage = $"Unable to open or create remote file: {status}"
+                };
+            }
+
+            long offset = 0;
+            var client = _clientProvider.GetSambaClient();
+            var buffer = new byte[client.MaxWriteSize];
+            int bytesRead;
+
+            while ((bytesRead = await request.SourceStream.ReadAsync(buffer, cancellationToken)) > 0)
+            {
+                status = fileStore.WriteFile(out _, fileHandle, offset, buffer.Take(bytesRead).ToArray());
+                if (status != NTStatus.STATUS_SUCCESS)
+                    throw new IOException($"Write failed at offset {offset}: {status}");
+
+                offset += bytesRead;
+            }
+
+            fileStore.CloseFile(fileHandle);
+
+            return new BaseResponse { IsSuccess = true };
+        }
+        catch (Exception ex)
+        {
+            return new BaseResponse
+            {
+                IsSuccess = false,
+                ErrorMessage = ex.Message
+            };
+        }
     }
 
     public async Task<BaseResponse> DeleteFileAsync(FileRequest request, CancellationToken token)

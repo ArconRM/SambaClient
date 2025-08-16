@@ -7,5 +7,5 @@ public class FileRequest
     public Guid ConnectionUuid { get; set; }
 
     // Относительный путь в share
-    public string RelativePath { get; set; }
+    public string TargetRemotePath { get; set; }
 }
