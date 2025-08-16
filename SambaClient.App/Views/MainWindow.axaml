@@ -7,7 +7,7 @@
         x:Class="SambaClient.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="Samba File Manager">
+        Title="Samba Client">
 
     <Grid>
         <Grid.RowDefinitions>
