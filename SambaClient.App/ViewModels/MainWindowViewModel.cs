@@ -339,7 +339,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task DownloadFileAsync()
     {
-        if (CurrentSmbServerConnection is null || SelectedFile is null) return;
+        if (CurrentSmbServerConnection is null || SelectedFile is null || SelectedFile.IsDirectory) return;
 
         try
         {
