@@ -78,6 +78,7 @@ public partial class App : Application
             return new AddConnectionViewModel(connectionManager);
         });
 
+        services.AddTransient<CreateNewFolderViewModel>(_ => new CreateNewFolderViewModel());
     }
 
     public static ServiceProvider Services => ((App)Current!)._serviceProvider!;

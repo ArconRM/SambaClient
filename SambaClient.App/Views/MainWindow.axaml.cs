@@ -18,11 +18,22 @@ public partial class MainWindow : Window
         {
             var vm = App.Services.GetRequiredService<AddConnectionViewModel>();
 
-            var dialog = new AddConnectionDialog()
+            var dialog = new AddConnectionDialog
             {
                 DataContext = vm
             };
             m.Reply(dialog.ShowDialog<SmbServerConnection?>(w));
+        });
+        
+        WeakReferenceMessenger.Default.Register<MainWindow, CreateNewFolderMessage>(this, (w, m) =>
+        {
+            var vm = App.Services.GetRequiredService<CreateNewFolderViewModel>();
+
+            var dialog = new CreateNewFolderDialog
+            {
+                DataContext = vm
+            };
+            m.Reply(dialog.ShowDialog<string?>(w));
         });
     }
 

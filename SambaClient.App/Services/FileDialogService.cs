@@ -48,4 +48,21 @@ public class FileDialogService : IFileDialogService
 
         return await provider.SaveFilePickerAsync(options);
     }
+    
+    public async Task<string?> OpenFolderDialogAsync(string title)
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop ||
+            desktop.MainWindow?.StorageProvider is not { } provider)
+        {
+            return null;
+        }
+
+        var options = new FolderPickerOpenOptions
+        {
+            Title = title
+        };
+
+        var folders = await provider.OpenFolderPickerAsync(options);
+        return folders.Count >= 1 ? folders[0].Path.LocalPath : null;
+    }
 }

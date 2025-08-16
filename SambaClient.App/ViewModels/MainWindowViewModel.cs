@@ -351,7 +351,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             var token = GetNewCancellationToken();
 
-            var request = new FileRequest()
+            var request = new FileRequest
             {
                 ConnectionUuid = CurrentSmbServerConnection.Uuid,
                 TargetRemotePath = selectedFilePath
@@ -393,7 +393,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             await using var stream = await file.OpenReadAsync();
 
-            var request = new UploadFileRequest()
+            var request = new UploadFileRequest
             {
                 ConnectionUuid = CurrentSmbServerConnection.Uuid,
                 TargetRemotePath = Path.Combine(CurrentPath, file.Name),
@@ -418,6 +418,44 @@ public partial class MainWindowViewModel : ViewModelBase
             StatusMessage = $"Error uploading file: {ex.Message}";
         }
     }
+    
+    [RelayCommand]
+    private async Task CreateNewFolderAsync()
+    {
+        if (CurrentSmbServerConnection is  null) return;
+        
+        var folderName = await WeakReferenceMessenger.Default.Send(new CreateNewFolderMessage());
+
+        if (folderName is null) return;
+        
+        try {
+            var token = GetNewCancellationToken();
+            
+            var targetPath = Path.Combine(CurrentPath, folderName);
+
+            var request = new FileRequest
+            {
+                ConnectionUuid = CurrentSmbServerConnection.Uuid,
+                TargetRemotePath = targetPath,
+            };
+
+            var response = await _smbService.CreateFolderAsync(request, token);
+
+            if (response.IsSuccess)
+            {
+                StatusMessage = $"Created new folder: {folderName}";
+                await RefreshFilesAsync();
+            }
+            else
+            {
+                StatusMessage = $"Error creating folder: {response.ErrorMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error creating folder: {ex.Message}";
+        }
+    }
 
     [RelayCommand]
     private async Task DeleteFileAsync()
@@ -428,7 +466,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             var token = GetNewCancellationToken();
 
-            var request = new FileRequest()
+            var request = new FileRequest
             {
                 ConnectionUuid = CurrentSmbServerConnection.Uuid,
                 TargetRemotePath = selectedFilePath

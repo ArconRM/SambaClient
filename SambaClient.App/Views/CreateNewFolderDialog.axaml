@@ -1,0 +1,66 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SambaClient.App.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="200"
+        x:Class="SambaClient.App.Views.CreateNewFolderDialog"
+        x:DataType="vm:CreateNewFolderViewModel"
+        Title="Create New Folder"
+        Width="550"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+
+    <Design.DataContext>
+        <vm:CreateNewFolderViewModel/>
+    </Design.DataContext>
+
+    <Border Padding="20">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Folder Form -->
+            <StackPanel Grid.Row="0" Spacing="15">
+                <TextBlock Text="New Folder"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Margin="0,0,0,10"/>
+
+                <!-- Folder Name -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Folder name:"/>
+                    <TextBox Text="{Binding FolderName}"
+                             Watermark="My New Folder"/>
+                </StackPanel>
+
+            </StackPanel>
+
+            <!-- Buttons -->
+            <Border Grid.Row="1"
+                    BorderBrush="Gray"
+                    BorderThickness="0,1,0,0"
+                    Padding="0,15,0,0"
+                    Margin="0,15,0,0">
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="10">
+
+                    <Button Content="Create"
+                            Command="{Binding SaveFolderCommand}"
+                            IsDefault="True"
+                            Padding="10,5"/>
+
+                    <Button Content="Cancel"
+                            Command="{Binding CancelCommand}"
+                            IsCancel="True"
+                            Padding="10,5"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

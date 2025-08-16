@@ -249,6 +249,46 @@ public class SmbService : ISmbService
         }
     }
 
+    public async Task<BaseResponse> CreateFolderAsync(FileRequest request, CancellationToken token)
+    {
+        try
+        {
+            var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);
+            var path = request.TargetRemotePath;
+
+            var status = fileStore.CreateFile(
+                out var fileHandle,
+                out _,
+                path,
+                AccessMask.GENERIC_WRITE,
+                FileAttributes.Directory,
+                ShareAccess.None,
+                CreateDisposition.FILE_CREATE,
+                CreateOptions.FILE_DIRECTORY_FILE,
+                null);
+
+            if (status == NTStatus.STATUS_SUCCESS)
+            {
+                fileStore.CloseFile(fileHandle);
+                return new BaseResponse { IsSuccess = true };
+            }
+
+            return new BaseResponse
+            {
+                IsSuccess = false,
+                ErrorMessage = $"Unable to create remote directory: {status}"
+            };
+        }
+        catch (Exception ex)
+        {
+            return new BaseResponse
+            {
+                IsSuccess = false,
+                ErrorMessage = ex.Message
+            };
+        }
+    }
+
     public async Task<BaseResponse> DeleteFileAsync(FileRequest request, CancellationToken token)
     {
         var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);

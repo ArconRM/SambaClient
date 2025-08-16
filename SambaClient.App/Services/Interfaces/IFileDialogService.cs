@@ -12,4 +12,6 @@ public interface IFileDialogService
         WellKnownFolder suggestedStartLocation,
         string suggestedFileName,
         string extension);
+
+    Task<string?> OpenFolderDialogAsync(string title);
 }
