@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:SambaClient.App.ViewModels"
         mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="180"
-        x:Class="SambaClient.App.Views.NameRequesDialog"
+        x:Class="SambaClient.App.Views.NameRequestDialog"
         x:DataType="vm:NameRequestDialogViewModel"
         Title="New name"
         Width="600"
@@ -33,7 +33,7 @@
 
                 <!-- Folder Name -->
                 <StackPanel Spacing="5">
-                    <TextBox Text="{Binding FolderName}"
+                    <TextBox Text="{Binding FileName}"
                              Watermark="Type new name here..."/>
                 </StackPanel>
 

@@ -28,8 +28,9 @@ public partial class MainWindow : Window
         WeakReferenceMessenger.Default.Register<MainWindow, NameRequestMessage>(this, (w, m) =>
         {
             var vm = App.Services.GetRequiredService<NameRequestDialogViewModel>();
+            vm.FileName = m.DefaultName;
 
-            var dialog = new NameRequesDialog
+            var dialog = new NameRequestDialog
             {
                 DataContext = vm
             };

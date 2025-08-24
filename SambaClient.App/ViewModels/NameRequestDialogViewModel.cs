@@ -11,12 +11,12 @@ namespace SambaClient.App.ViewModels;
 public partial class NameRequestDialogViewModel : ViewModelBase
 {
     [ObservableProperty]
-    private string folderName = string.Empty;
+    private string fileName = string.Empty;
 
     [RelayCommand]
     private void SaveName()
     {
-        WeakReferenceMessenger.Default.Send(new NameRequestCloseMessage(folderName));
+        WeakReferenceMessenger.Default.Send(new NameRequestCloseMessage(FileName));
     }
 
     [RelayCommand]
