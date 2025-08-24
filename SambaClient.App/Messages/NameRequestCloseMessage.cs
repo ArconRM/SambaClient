@@ -1,6 +1,6 @@
 namespace SambaClient.App.Messages;
 
-public class CreateNewFolderCloseMessage(string folderName)
+public class NameRequestCloseMessage(string folderName)
 {
     public string FolderName { get; set; } = folderName;
 }

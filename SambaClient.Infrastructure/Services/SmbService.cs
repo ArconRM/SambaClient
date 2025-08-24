@@ -194,11 +194,11 @@ public class SmbService : ISmbService
     }
 
 
-    public async Task<BaseResponse> UploadFileAsync(UploadFileRequest request, CancellationToken cancellationToken)
+    public async Task<BaseResponse> UploadFileAsync(UploadFileRequest request, CancellationToken token)
     {
         try
         {
-            var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, cancellationToken);
+            var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);
             var path = request.TargetRemotePath;
 
             var status = fileStore.CreateFile(
@@ -226,7 +226,7 @@ public class SmbService : ISmbService
             var buffer = new byte[client.MaxWriteSize];
             int bytesRead;
 
-            while ((bytesRead = await request.SourceStream.ReadAsync(buffer, cancellationToken)) > 0)
+            while ((bytesRead = await request.SourceStream.ReadAsync(buffer, token)) > 0)
             {
                 status = fileStore.WriteFile(out _, fileHandle, offset, buffer.Take(bytesRead).ToArray());
                 if (status != NTStatus.STATUS_SUCCESS)
@@ -248,6 +248,56 @@ public class SmbService : ISmbService
             };
         }
     }
+
+    public async Task<BaseResponse> UpdateFileNameAsync(UpdateFileNameRequest request, CancellationToken token)
+    {
+        try
+        {
+            var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);
+            var oldPath = request.TargetRemotePath;
+            var newName = request.NewRemoteTargetPath;
+
+            var status = fileStore.CreateFile(
+                out var fileHandle,
+                out _,
+                oldPath,
+                AccessMask.DELETE | AccessMask.GENERIC_WRITE,
+                FileAttributes.Normal,
+                ShareAccess.None,
+                CreateDisposition.FILE_OPEN,
+                CreateOptions.FILE_NON_DIRECTORY_FILE | CreateOptions.FILE_SYNCHRONOUS_IO_ALERT,
+                null);
+
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                return new BaseResponse
+                {
+                    IsSuccess = false,
+                    ErrorMessage = $"Failed to open file for rename: {status}"
+                };
+            }
+
+            var renameInfo = new FileRenameInformationType2
+            {
+                ReplaceIfExists = false,
+                FileName = newName.StartsWith("\\") ? newName : "\\" + newName
+            };
+
+            status = fileStore.SetFileInformation(fileHandle, renameInfo);
+
+            fileStore.CloseFile(fileHandle);
+
+            return status == NTStatus.STATUS_SUCCESS
+                ? new BaseResponse { IsSuccess = true }
+                : new BaseResponse { IsSuccess = false, ErrorMessage = $"Rename failed: {status}" };
+        }
+        catch (Exception ex)
+        {
+            return new BaseResponse { IsSuccess = false, ErrorMessage = ex.Message };
+        }
+    }
+
+
 
     public async Task<BaseResponse> CreateFolderAsync(FileRequest request, CancellationToken token)
     {

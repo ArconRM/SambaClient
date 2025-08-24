@@ -6,13 +6,13 @@ using SambaClient.App.Messages;
 
 namespace SambaClient.App.Views;
 
-public partial class CreateNewFolderDialog : Window
+public partial class NameRequestDialog : Window
 {
-    public CreateNewFolderDialog()
+    public NameRequestDialog()
     {
         InitializeComponent();
         
-        WeakReferenceMessenger.Default.Register<CreateNewFolderDialog, CreateNewFolderCloseMessage>(this,
+        WeakReferenceMessenger.Default.Register<NameRequestDialog, NameRequestCloseMessage>(this,
             static (window, message) => { window.Close(message.FolderName); });
     }
 }

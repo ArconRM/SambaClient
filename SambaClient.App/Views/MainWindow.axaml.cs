@@ -16,7 +16,7 @@ public partial class MainWindow : Window
 
         WeakReferenceMessenger.Default.Register<MainWindow, AddConnectionMessage>(this, (w, m) =>
         {
-            var vm = App.Services.GetRequiredService<AddConnectionViewModel>();
+            var vm = App.Services.GetRequiredService<AddConnectionDialogViewModel>();
 
             var dialog = new AddConnectionDialog
             {
@@ -25,11 +25,12 @@ public partial class MainWindow : Window
             m.Reply(dialog.ShowDialog<SmbServerConnection?>(w));
         });
         
-        WeakReferenceMessenger.Default.Register<MainWindow, CreateNewFolderMessage>(this, (w, m) =>
+        WeakReferenceMessenger.Default.Register<MainWindow, NameRequestMessage>(this, (w, m) =>
         {
-            var vm = App.Services.GetRequiredService<CreateNewFolderViewModel>();
+            var vm = App.Services.GetRequiredService<NameRequestDialogViewModel>();
+            vm.FileName = m.DefaultName;
 
-            var dialog = new CreateNewFolderDialog
+            var dialog = new NameRequestDialog
             {
                 DataContext = vm
             };

@@ -281,7 +281,6 @@ public partial class MainWindowViewModel : ViewModelBase
         if (!IsConnected || CurrentSmbServerConnection is null) return;
 
         IsLoading = true;
-        StatusMessage = "Loading files...";
 
         try
         {
@@ -299,8 +298,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
                     Files.Add(file);
                 }
-
-                StatusMessage = $"Loaded {Files.Count} items";
             }
             else
             {
@@ -361,7 +358,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
             if (response.IsSuccess)
             {
-
                 using var fileStream = await saveFile.OpenWriteAsync();
 
                 await response.Stream.CopyToAsync(fileStream, token);
@@ -418,19 +414,20 @@ public partial class MainWindowViewModel : ViewModelBase
             StatusMessage = $"Error uploading file: {ex.Message}";
         }
     }
-    
+
     [RelayCommand]
     private async Task CreateNewFolderAsync()
     {
-        if (CurrentSmbServerConnection is  null) return;
-        
-        var folderName = await WeakReferenceMessenger.Default.Send(new CreateNewFolderMessage());
+        if (CurrentSmbServerConnection is null) return;
 
-        if (folderName is null) return;
-        
-        try {
+        var folderName = await WeakReferenceMessenger.Default.Send(new NameRequestMessage());
+
+        if (string.IsNullOrEmpty(folderName)) return;
+
+        try
+        {
             var token = GetNewCancellationToken();
-            
+
             var targetPath = Path.Combine(CurrentPath, folderName);
 
             var request = new FileRequest
@@ -454,6 +451,48 @@ public partial class MainWindowViewModel : ViewModelBase
         catch (Exception ex)
         {
             StatusMessage = $"Error creating folder: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task RenameFileAsync()
+    {
+        if (CurrentSmbServerConnection is null || SelectedFile is null) return;
+
+        var currentFileName = SelectedFile.FileName;
+        var newName = await WeakReferenceMessenger.Default.Send(new NameRequestMessage(currentFileName));
+        
+        if (string.IsNullOrEmpty(newName)) return;
+
+        try
+        {
+            var token = GetNewCancellationToken();
+            
+            var oldTargetPath = Path.Combine(CurrentPath, SelectedFile.FileName);
+            var newTargetPath = Path.Combine(CurrentPath, newName);
+
+            var request = new UpdateFileNameRequest
+            {
+                ConnectionUuid = CurrentSmbServerConnection.Uuid,
+                TargetRemotePath = oldTargetPath,
+                NewRemoteTargetPath = newTargetPath
+            };
+            
+            var response = await _smbService.UpdateFileNameAsync(request, token);
+
+            if (response.IsSuccess)
+            {
+                StatusMessage = $"Renamed file: {SelectedFile.FileName} -> {newName}";
+                await RefreshFilesAsync();
+            }
+            else
+            {
+                StatusMessage = $"Error renaming a file: {response.ErrorMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error renaming a file: {ex.Message}";
         }
     }
 

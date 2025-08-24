@@ -8,20 +8,20 @@ using SambaClient.App.Messages;
 
 namespace SambaClient.App.ViewModels;
 
-public partial class CreateNewFolderViewModel : ViewModelBase
+public partial class NameRequestDialogViewModel : ViewModelBase
 {
     [ObservableProperty]
-    private string folderName = string.Empty;
+    private string fileName = string.Empty;
 
     [RelayCommand]
-    private void SaveFolder()
+    private void SaveName()
     {
-        WeakReferenceMessenger.Default.Send(new CreateNewFolderCloseMessage(folderName));
+        WeakReferenceMessenger.Default.Send(new NameRequestCloseMessage(FileName));
     }
 
     [RelayCommand]
     private void Cancel()
     {
-        WeakReferenceMessenger.Default.Send(new CreateNewFolderCloseMessage(null));
+        WeakReferenceMessenger.Default.Send(new NameRequestCloseMessage(null));
     }
 }
