@@ -72,13 +72,13 @@ public partial class App : Application
             return new MainWindowViewModel(fileDialogService, connectionManager, smbService);
         });
         
-        services.AddTransient<AddConnectionViewModel>(provider =>
+        services.AddTransient<AddConnectionDialogViewModel>(provider =>
         {
             var connectionManager = provider.GetRequiredService<ISmbConnectionManager>();
-            return new AddConnectionViewModel(connectionManager);
+            return new AddConnectionDialogViewModel(connectionManager);
         });
 
-        services.AddTransient<CreateNewFolderViewModel>(_ => new CreateNewFolderViewModel());
+        services.AddTransient<NameRequestDialogViewModel>(_ => new NameRequestDialogViewModel());
     }
 
     public static ServiceProvider Services => ((App)Current!)._serviceProvider!;

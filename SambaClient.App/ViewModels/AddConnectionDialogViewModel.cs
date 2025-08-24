@@ -16,7 +16,7 @@ using SambaClient.Infrastructure.Services.Interfaces;
 
 namespace SambaClient.App.ViewModels;
 
-public partial class AddConnectionViewModel : ViewModelBase
+public partial class AddConnectionDialogViewModel : ViewModelBase
 {
     private readonly ISmbConnectionManager _connectionManager;
 
@@ -61,9 +61,9 @@ public partial class AddConnectionViewModel : ViewModelBase
 
     public SmbServerConnection? SavedConnection { get; private set; }
 
-    public AddConnectionViewModel() : this(null!) { }
+    public AddConnectionDialogViewModel() : this(null!) { }
 
-    public AddConnectionViewModel(ISmbConnectionManager connectionManager)
+    public AddConnectionDialogViewModel(ISmbConnectionManager connectionManager)
     {
         _connectionManager = connectionManager;
 
