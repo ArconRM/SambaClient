@@ -193,7 +193,7 @@
                                             Binding="{Binding IsDirectory, Converter={x:Static vm:MainWindowViewModel.FileTypeConverter}}"
                                             Width="Auto" />
                         <DataGridTextColumn Header="Size"
-                                            Binding="{Binding Size}"
+                                            Binding="{Binding Size, Converter={x:Static vm:MainWindowViewModel.FileSizeConverter}}"
                                             Width="Auto" />
                         <DataGridTextColumn Header="ModifiedDate"
                                             Binding="{Binding ModifiedDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
