@@ -309,5 +309,8 @@ public partial class MainWindowViewModel : BaseFileBrowserViewModel
         new FuncValueConverter<bool, string>(isDirectory => isDirectory ? "Folder" : "File");
 
     public static readonly IValueConverter FileSizeConverter =
-        new FuncValueConverter<long, string>(size => size == 0 ? "-" : size.ToString());
+        new FuncValueConverter<long, string>(size => 
+            size == 0 
+                ? "-" 
+                : $"{((double)size / (1000 * 1000)):0.00} MB");
 }

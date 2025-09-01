@@ -198,7 +198,7 @@
                         <DataGridTextColumn Header="Size"
                                             Binding="{Binding Size, Converter={x:Static vm:MainWindowViewModel.FileSizeConverter}}"
                                             Width="Auto" />
-                        <DataGridTextColumn Header="ModifiedDate"
+                        <DataGridTextColumn Header="Modified Date"
                                             Binding="{Binding ModifiedDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
                                             Width="Auto" />
                     </DataGrid.Columns>
