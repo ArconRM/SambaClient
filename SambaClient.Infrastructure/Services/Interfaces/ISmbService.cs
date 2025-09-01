@@ -13,9 +13,11 @@ public interface ISmbService
     
     Task<BaseResponse> UploadFileAsync(UploadFileRequest request, CancellationToken token);
     
-    Task<BaseResponse> UpdateFileNameAsync(UpdateFileNameRequest request, CancellationToken token);
+    Task<BaseResponse> UpdateFileNameAsync(UpdateFilePathRequest request, CancellationToken token);
     
     Task<BaseResponse> CreateFolderAsync(FileRequest request, CancellationToken token);
+    
+    Task<BaseResponse> MoveFileAsync(UpdateFilePathRequest request, CancellationToken token);
     
     Task<BaseResponse> DeleteFileAsync(FileRequest request, CancellationToken token);
 }
