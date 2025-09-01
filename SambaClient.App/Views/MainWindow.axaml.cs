@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,18 @@ public partial class MainWindow : Window
             };
             m.Reply(dialog.ShowDialog<string?>(w));
         });
+        
+        // WeakReferenceMessenger.Default.Register<MainWindow, SelectFolderMessage>(this, (w, m) =>
+        // {
+        //     var vm = App.Services.GetRequiredService<SelectFolderWindowViewModel>();
+        //
+        //     var dialog = new SelectFolderWindow
+        //     {
+        //         DataContext = vm
+        //     };
+        //
+        //     m.Reply(dialog.ShowDialog<string?>(w));
+        // });
     }
 
     private async void OnDataGridDoubleTapped(object sender, Avalonia.Input.TappedEventArgs e)
@@ -46,7 +59,7 @@ public partial class MainWindow : Window
         var selectedItem = dataGrid?.SelectedItem;
         if (selectedItem != null && vm != null)
         {
-            await vm.MoveToInnerFolderAsync();
+            await vm.MoveToInnerFolderAsync(CancellationToken.None);
         }
     }
 }

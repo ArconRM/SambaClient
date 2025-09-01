@@ -42,7 +42,6 @@ public class SmbService : ISmbService
         return fileStore;
     }
 
-
     public async Task<GetFilesResponse> GetAllFilesAsync(
         Guid connectionUuid,
         string innerPath,
@@ -114,7 +113,7 @@ public class SmbService : ISmbService
             var status = fileStore.CreateFile(
                 out var fileHandle,
                 out var fileStatus,
-                request.TargetRemotePath,
+                request.RemotePath,
                 AccessMask.GENERIC_READ,
                 FileAttributes.Normal,
                 ShareAccess.Read,
@@ -148,7 +147,7 @@ public class SmbService : ISmbService
                 while (offset < fileSize)
                 {
                     var bytesToRead = (int)Math.Min(buffer.Length, fileSize - offset);
-                
+
                     status = fileStore.ReadFile(out byte[] data, fileHandle, offset, bytesToRead);
                     if (status != NTStatus.STATUS_SUCCESS)
                     {
@@ -192,14 +191,13 @@ public class SmbService : ISmbService
             };
         }
     }
-
-
+    
     public async Task<BaseResponse> UploadFileAsync(UploadFileRequest request, CancellationToken token)
     {
         try
         {
             var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);
-            var path = request.TargetRemotePath;
+            var path = request.RemotePath;
 
             var status = fileStore.CreateFile(
                 out var fileHandle,
@@ -237,7 +235,10 @@ public class SmbService : ISmbService
 
             fileStore.CloseFile(fileHandle);
 
-            return new BaseResponse { IsSuccess = true };
+            return new BaseResponse
+            {
+                IsSuccess = true
+            };
         }
         catch (Exception ex)
         {
@@ -249,13 +250,13 @@ public class SmbService : ISmbService
         }
     }
 
-    public async Task<BaseResponse> UpdateFileNameAsync(UpdateFileNameRequest request, CancellationToken token)
+    public async Task<BaseResponse> UpdateFileNameAsync(UpdateFilePathRequest request, CancellationToken token)
     {
         try
         {
             var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);
-            var oldPath = request.TargetRemotePath;
-            var newName = request.NewRemoteTargetPath;
+            var oldPath = request.RemotePath;
+            var newName = request.NewRemotePath;
 
             var status = fileStore.CreateFile(
                 out var fileHandle,
@@ -288,23 +289,32 @@ public class SmbService : ISmbService
             fileStore.CloseFile(fileHandle);
 
             return status == NTStatus.STATUS_SUCCESS
-                ? new BaseResponse { IsSuccess = true }
-                : new BaseResponse { IsSuccess = false, ErrorMessage = $"Rename failed: {status}" };
+                ? new BaseResponse
+                {
+                    IsSuccess = true
+                }
+                : new BaseResponse
+                {
+                    IsSuccess = false,
+                    ErrorMessage = $"Rename failed: {status}"
+                };
         }
         catch (Exception ex)
         {
-            return new BaseResponse { IsSuccess = false, ErrorMessage = ex.Message };
+            return new BaseResponse
+            {
+                IsSuccess = false,
+                ErrorMessage = ex.Message
+            };
         }
     }
-
-
 
     public async Task<BaseResponse> CreateFolderAsync(FileRequest request, CancellationToken token)
     {
         try
         {
             var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);
-            var path = request.TargetRemotePath;
+            var path = request.RemotePath;
 
             var status = fileStore.CreateFile(
                 out var fileHandle,
@@ -320,7 +330,10 @@ public class SmbService : ISmbService
             if (status == NTStatus.STATUS_SUCCESS)
             {
                 fileStore.CloseFile(fileHandle);
-                return new BaseResponse { IsSuccess = true };
+                return new BaseResponse
+                {
+                    IsSuccess = true
+                };
             }
 
             return new BaseResponse
@@ -339,10 +352,72 @@ public class SmbService : ISmbService
         }
     }
 
+    public async Task<BaseResponse> MoveFileAsync(UpdateFilePathRequest request, CancellationToken token)
+    {
+        try
+        {
+            var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);
+
+            var oldPath = request.RemotePath;
+            var newPath = request.NewRemotePath;
+
+            var status = fileStore.CreateFile(
+                out var fileHandle,
+                out _,
+                oldPath,
+                AccessMask.DELETE | AccessMask.GENERIC_WRITE,
+                FileAttributes.Normal,
+                ShareAccess.None,
+                CreateDisposition.FILE_OPEN,
+                CreateOptions.FILE_NON_DIRECTORY_FILE | CreateOptions.FILE_SYNCHRONOUS_IO_ALERT,
+                null);
+
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                return new BaseResponse
+                {
+                    IsSuccess = false,
+                    ErrorMessage = $"Failed to open file for moving: {status}"
+                };
+            }
+
+            var normalizedNewPath = newPath.StartsWith("\\") ? newPath : "\\" + newPath;
+
+            var renameInfo = new FileRenameInformationType2
+            {
+                ReplaceIfExists = true,
+                FileName = normalizedNewPath
+            };
+
+            status = fileStore.SetFileInformation(fileHandle, renameInfo);
+
+            fileStore.CloseFile(fileHandle);
+
+            return status == NTStatus.STATUS_SUCCESS
+                ? new BaseResponse
+                {
+                    IsSuccess = true
+                }
+                : new BaseResponse
+                {
+                    IsSuccess = false,
+                    ErrorMessage = $"Move failed: {status}"
+                };
+        }
+        catch (Exception ex)
+        {
+            return new BaseResponse
+            {
+                IsSuccess = false,
+                ErrorMessage = $"Failed to move file: {ex.Message}"
+            };
+        }
+    }
+    
     public async Task<BaseResponse> DeleteFileAsync(FileRequest request, CancellationToken token)
     {
         var fileStore = await GetVerifiedFileStoreAsync(request.ConnectionUuid, token);
-        var remoteFilePath = request.TargetRemotePath;
+        var remoteFilePath = request.RemotePath;
 
         var status = fileStore.CreateFile(
             out var fileHandle,
@@ -356,7 +431,11 @@ public class SmbService : ISmbService
             null);
 
         if (status != NTStatus.STATUS_SUCCESS)
-            return new BaseResponse { IsSuccess = false, ErrorMessage = $"Failed to open file: {status}" };
+            return new BaseResponse
+            {
+                IsSuccess = false,
+                ErrorMessage = $"Failed to open file: {status}"
+            };
 
         FileDispositionInformation fileDispositionInformation = new FileDispositionInformation();
         fileDispositionInformation.DeletePending = true;
@@ -365,7 +444,14 @@ public class SmbService : ISmbService
         status = fileStore.CloseFile(fileHandle);
 
         return status == NTStatus.STATUS_SUCCESS && deleteSucceeded
-            ? new BaseResponse { IsSuccess = true }
-            : new BaseResponse { IsSuccess = false, ErrorMessage = $"Failed to delete file: {status}" };
+            ? new BaseResponse
+            {
+                IsSuccess = true
+            }
+            : new BaseResponse
+            {
+                IsSuccess = false,
+                ErrorMessage = $"Failed to delete file: {status}"
+            };
     }
 }

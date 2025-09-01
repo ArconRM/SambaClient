@@ -1,0 +1,90 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SambaClient.App.ViewModels"
+        x:Class="SambaClient.App.Views.SelectFolderWindow"
+        x:DataType="vm:SelectFolderWindowViewModel"
+        Width="800" Height="600"
+        Title="Select folder">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /> <!-- Path bar -->
+            <RowDefinition Height="*" />    <!-- File list -->
+            <RowDefinition Height="Auto" />    <!-- Buttons -->
+        </Grid.RowDefinitions>
+
+        <!-- Path bar with Back button -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                Padding="5"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,Auto,*">
+                <!-- Back Button -->
+                <Button Grid.Column="0"
+                        Content="Back"
+                        Command="{Binding MoveToParentFolderCommand}"
+                        IsEnabled="{Binding CurrentPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                        Padding="8,4" />
+
+                <!-- Path Label -->
+                <TextBlock Grid.Column="1"
+                           Text="Path:"
+                           VerticalAlignment="Center"
+                           Margin="10,0,0,0"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+
+                <!-- Current Path Display -->
+                <TextBox Grid.Column="2"
+                         Text="{Binding CurrentPath}"
+                         IsReadOnly="True"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         VerticalAlignment="Center"
+                         Margin="5,0" />
+            </Grid>
+        </Border>
+
+        <!-- File list -->
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Files}"
+                  SelectedItem="{Binding SelectedFile}"
+                  IsReadOnly="True"
+                  DoubleTapped="OnDataGridDoubleTapped"
+                  GridLinesVisibility="Horizontal"
+                  HeadersVisibility="Column"
+                  Margin="0,5,0,0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Name"
+                                    Binding="{Binding FileName}"
+                                    Width="*" />
+                <DataGridTextColumn Header="Size"
+                                    Binding="{Binding Size}"
+                                    Width="Auto" />
+                <DataGridTextColumn Header="Modified"
+                                    Binding="{Binding ModifiedDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
+                                    Width="Auto" />
+            </DataGrid.Columns>
+        </DataGrid>
+        
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2"
+                    Margin="0,15,0,0">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="10">
+
+                <Button Content="Cancel"
+                        Command="{Binding CancelCommand}"
+                        IsCancel="True"
+                        Padding="10,5"/>
+
+                <Button Content="Select"
+                        Command="{Binding SelectFolderCommand}"
+                        IsDefault="True"
+                        Padding="10,5"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>
+

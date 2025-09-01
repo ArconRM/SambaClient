@@ -27,7 +27,7 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         DisableAvaloniaDataAnnotationValidation();
-        
+
         var services = new ServiceCollection();
         var mainWindow = new MainWindow();
         ConfigureServices(services);
@@ -55,7 +55,7 @@ public partial class App : Application
             BindingPlugins.DataValidators.Remove(plugin);
         }
     }
-    
+
     private static void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<IFileDialogService, FileDialogService>();
@@ -63,7 +63,7 @@ public partial class App : Application
         services.AddSingleton<ISmbClientProvider, SmbClientProvider>();
         services.AddSingleton<ISmbConnectionManager, ConnectionManager>();
         services.AddSingleton<ISmbService, SmbService>();
-        
+
         services.AddTransient<MainWindowViewModel>(provider =>
         {
             var fileDialogService = provider.GetRequiredService<IFileDialogService>();
@@ -71,7 +71,7 @@ public partial class App : Application
             var smbService = provider.GetRequiredService<ISmbService>();
             return new MainWindowViewModel(fileDialogService, connectionManager, smbService);
         });
-        
+
         services.AddTransient<AddConnectionDialogViewModel>(provider =>
         {
             var connectionManager = provider.GetRequiredService<ISmbConnectionManager>();
@@ -79,6 +79,13 @@ public partial class App : Application
         });
 
         services.AddTransient<NameRequestDialogViewModel>(_ => new NameRequestDialogViewModel());
+
+        services.AddTransient<SelectFolderWindowViewModel>(provider =>
+        {
+            var connectionManager = provider.GetRequiredService<ISmbConnectionManager>();
+            var smbService = provider.GetRequiredService<ISmbService>();
+            return new SelectFolderWindowViewModel(connectionManager, smbService);
+        });
     }
 
     public static ServiceProvider Services => ((App)Current!)._serviceProvider!;

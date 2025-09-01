@@ -48,12 +48,12 @@
                             Padding="10,5" />
 
                     <Button Content="Connect"
-                            Command="{Binding ConnectToServerCommand}"
+                            Command="{Binding ConnectToServerWithLoadingFilesCommand}"
                             IsEnabled="{Binding CanConnect}"
                             Padding="10,5" />
 
                     <Button Content="Disconnect"
-                            Command="{Binding DisconnectFromServerCommand}"
+                            Command="{Binding DisconnectFromServerWithClearingCommand}"
                             IsVisible="{Binding IsConnected}"
                             Padding="10,5" />
 
@@ -134,7 +134,7 @@
                         <!-- Refresh Button -->
                         <Button Grid.Column="3"
                                 Content="Refresh"
-                                Command="{Binding RefreshFilesCommand}"
+                                Command="{Binding LoadFilesCommand}"
                                 IsEnabled="{Binding IsConnected}"
                                 Padding="8,4"
                                 Margin="10,0,0,0" />
@@ -176,6 +176,9 @@
                                               CommandParameter="{Binding}"/>
                                     <MenuItem Header="Rename"
                                               Command="{Binding $parent[DataGrid].DataContext.RenameFileCommand}"
+                                              CommandParameter="{Binding}"/>
+                                    <MenuItem Header="Move"
+                                              Command="{Binding $parent[DataGrid].DataContext.MoveFileCommand}"
                                               CommandParameter="{Binding}"/>
                                     <MenuItem Header="Delete"
                                               Command="{Binding $parent[DataGrid].DataContext.DeleteFileCommand}"
