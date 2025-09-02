@@ -74,14 +74,14 @@
                         HorizontalAlignment="Right"
                         Spacing="10">
 
-                <Button Content="Cancel"
-                        Command="{Binding CancelCommand}"
-                        IsCancel="True"
-                        Padding="10,5"/>
-
                 <Button Content="Select"
                         Command="{Binding SelectFolderCommand}"
                         IsDefault="True"
+                        Padding="10,5"/>
+
+                <Button Content="Cancel"
+                        Command="{Binding CancelCommand}"
+                        IsCancel="True"
                         Padding="10,5"/>
             </StackPanel>
         </StackPanel>

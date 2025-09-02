@@ -8,6 +8,8 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using SambaClient.App.Messages;
 using SambaClient.App.Services.Interfaces;
 using SambaClient.App.ViewModels.Base;
@@ -243,6 +245,13 @@ public partial class MainWindowViewModel : BaseFileBrowserViewModel
 
         try
         {
+            var box = MessageBoxManager
+                .GetMessageBoxStandard("Delete file", "Are you sure you would like to delete file?",
+                    ButtonEnum.YesNo);
+
+            var result = await box.ShowAsync();
+            if (result != ButtonResult.Yes) return;
+            
             var request = new FileRequest
             {
                 ConnectionUuid = CurrentSmbServerConnection.Uuid,
