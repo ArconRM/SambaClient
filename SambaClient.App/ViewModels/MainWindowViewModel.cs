@@ -147,7 +147,7 @@ public partial class MainWindowViewModel : BaseFileBrowserViewModel
 
             if (response.IsSuccess)
             {
-                StatusMessage = $"Uploaded new file to share";
+                StatusMessage = $"Uploaded new file";
                 await LoadFilesAsync(token);
             }
             else
@@ -217,14 +217,15 @@ public partial class MainWindowViewModel : BaseFileBrowserViewModel
             {
                 ConnectionUuid = CurrentSmbServerConnection.Uuid,
                 RemotePath = oldTargetPath,
-                NewRemotePath = newTargetPath
+                NewRemotePath = newTargetPath,
+                IsDirectory = SelectedFile.IsDirectory
             };
 
             var response = await SmbService.UpdateFileNameAsync(request, token);
 
             if (response.IsSuccess)
             {
-                StatusMessage = $"Renamed file: {SelectedFile.FileName} -> {newName}";
+                StatusMessage = $"Renamed {SelectedFile.FileName} -> {newName}";
                 await LoadFilesAsync(token);
             }
             else
@@ -255,14 +256,15 @@ public partial class MainWindowViewModel : BaseFileBrowserViewModel
             var request = new FileRequest
             {
                 ConnectionUuid = CurrentSmbServerConnection.Uuid,
-                RemotePath = SelectedFilePath
+                RemotePath = SelectedFilePath,
+                IsDirectory = SelectedFile.IsDirectory
             };
 
             var response = await SmbService.DeleteFileAsync(request, token);
 
             if (response.IsSuccess)
             {
-                StatusMessage = $"Deleted file";
+                StatusMessage = $"Deleted {SelectedFile.FileName}";
                 await LoadFilesAsync(token);
             }
             else
@@ -294,13 +296,14 @@ public partial class MainWindowViewModel : BaseFileBrowserViewModel
             {
                 ConnectionUuid = CurrentSmbServerConnection.Uuid,
                 RemotePath = SelectedFilePath,
-                NewRemotePath = Path.Combine(newPath, SelectedFile.FileName)
+                NewRemotePath = Path.Combine(newPath, SelectedFile.FileName),
+                IsDirectory = SelectedFile.IsDirectory
             };
 
             var response = await SmbService.MoveFileAsync(request, token);
             if (response.IsSuccess)
             {
-                StatusMessage = $"Moved file";
+                StatusMessage = $"Moved {SelectedFile.FileName} -> {newPath}";
                 await LoadFilesAsync(token);
             }
             else

@@ -266,7 +266,7 @@ public class SmbService : ISmbService
                 FileAttributes.Normal,
                 ShareAccess.None,
                 CreateDisposition.FILE_OPEN,
-                CreateOptions.FILE_NON_DIRECTORY_FILE | CreateOptions.FILE_SYNCHRONOUS_IO_ALERT,
+                request.IsDirectory ? CreateOptions.FILE_DIRECTORY_FILE : CreateOptions.FILE_NON_DIRECTORY_FILE,
                 null);
 
             if (status != NTStatus.STATUS_SUCCESS)
@@ -369,7 +369,7 @@ public class SmbService : ISmbService
                 FileAttributes.Normal,
                 ShareAccess.None,
                 CreateDisposition.FILE_OPEN,
-                CreateOptions.FILE_NON_DIRECTORY_FILE | CreateOptions.FILE_SYNCHRONOUS_IO_ALERT,
+                request.IsDirectory ? CreateOptions.FILE_DIRECTORY_FILE : CreateOptions.FILE_NON_DIRECTORY_FILE,
                 null);
 
             if (status != NTStatus.STATUS_SUCCESS)
@@ -427,7 +427,7 @@ public class SmbService : ISmbService
             FileAttributes.Normal,
             ShareAccess.None,
             CreateDisposition.FILE_OPEN,
-            CreateOptions.FILE_NON_DIRECTORY_FILE,
+            request.IsDirectory ? CreateOptions.FILE_DIRECTORY_FILE : CreateOptions.FILE_NON_DIRECTORY_FILE,
             null);
 
         if (status != NTStatus.STATUS_SUCCESS)

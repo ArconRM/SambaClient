@@ -8,4 +8,6 @@ public class FileRequest
 
     // Относительный путь в share
     public string RemotePath { get; set; }
+
+    public bool IsDirectory { get; set; }
 }
